@@ -344,6 +344,19 @@ export const CASES: CaseDef[] = [
       { emoji: '🌟', name: 'Divine Power', value: 90_000_000_000,weight: 20 },
     ]),
   },
+  {
+    id: 'jackpot',
+    name: 'JACKPOT CASE',
+    price: 1_000_000_000,
+    emoji: '💰',
+    color: '#ffd700',
+    risk: 'high',
+    items: w([
+      { emoji: '🪙', name: 'Dud',          value: 1,              weight: 90 },
+      { emoji: '🪙', name: 'Dud',          value: 1,              weight: 90 },
+      { emoji: '💎', name: 'JACKPOT',      value: 10_000_000_000, weight: 20 },
+    ]),
+  },
 ];
 
 export function rollItem(caseDef: CaseDef): CaseItem {
