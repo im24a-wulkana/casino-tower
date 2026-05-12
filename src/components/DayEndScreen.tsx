@@ -15,7 +15,7 @@ export function DayEndScreen() {
   if (!lastEntry) return null;
 
   const { quotaHit, profit, penalty, startBank, endBank, day } = lastEntry;
-  const isLastDay = day >= 12;
+  const isLastDay = day >= 15;
 
   return (
     <div className={`overlay-screen ${visible ? 'overlay-visible' : ''}`}>

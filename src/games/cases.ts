@@ -198,7 +198,9 @@ export function oddsPercent(item: CaseItem, caseDef: CaseDef): number {
 }
 
 export function formatVal(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(n >= 100_000 ? 0 : 1)}K`;
+  if (n >= 1_000_000_000_000) return `$${(n / 1_000_000_000_000).toFixed(2)}T`;
+  if (n >= 1_000_000_000)     return `$${(n / 1_000_000_000).toFixed(2)}B`;
+  if (n >= 1_000_000)         return `$${(n / 1_000_000).toFixed(2)}M`;
+  if (n >= 1_000)             return `$${(n / 1_000).toFixed(n >= 100_000 ? 0 : 1)}K`;
   return `$${n.toLocaleString()}`;
 }

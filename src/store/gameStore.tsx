@@ -8,25 +8,20 @@ import {
   applyDayEnd,
 } from '../utils/gameLogic';
 
-// All games on all floors — used for dev mode
 const ALL_GAMES = [
   'blackjack', 'roulette', 'slots', 'street-craps', 'wheel-of-fortune', 'duck-race',
   'penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel',
   'dragon-tower', 'mine-sweeper', 'baccarat', 'poker',
+  'case-opening', 'case-battle',
 ];
 
 function makeDevState(): GameState {
   return {
     ...createInitialState(),
-    bank: 999_999_999,
-    floor: 4,
+    bank: 999_999_999_999,
+    floor: 5,
     quota: 0,
-    availableGames: [
-      'blackjack', 'roulette', 'slots', 'street-craps', 'wheel-of-fortune', 'duck-race',
-      'penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel',
-      'dragon-tower', 'mine-sweeper', 'baccarat', 'poker',
-      'case-opening', 'case-battle',
-    ],
+    availableGames: [...ALL_GAMES],
   };
 }
 
@@ -80,12 +75,24 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
     }
 
     case 'START_NEXT_DAY': {
+      // "Keep playing" from victory screen — stay on floor 5, no quota
+      if (state.phase === 'victory') {
+        return {
+          ...state,
+          phase: 'playing',
+          activeGame: null,
+          timeLeft: 300,
+          quota: 0,
+          dailyStartBank: state.bank,
+          availableGames: getAvailableGames(5, state.day * 137 + 42),
+        };
+      }
       const lastEntry = state.gameHistory[state.gameHistory.length - 1];
-      if (lastEntry && !lastEntry.quotaHit && state.day < 12) {
+      if (lastEntry && !lastEntry.quotaHit && state.day < 15) {
         return { ...state, phase: 'game-over' };
       }
-      if (state.day >= 12) {
-        return { ...state, phase: state.bank >= 500_000 ? 'victory' : 'game-over' };
+      if (state.day >= 15) {
+        return { ...state, phase: 'victory' };
       }
       const newDay = state.day + 1;
       const newFloor = getFloorForDay(newDay);
@@ -110,13 +117,27 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
     case 'LOAD_STATE':
       return { ...action.state };
 
+    case 'BUY_TICKET': {
+      if (action.isDev) return { ...state, tickets: state.tickets + 1 };
+      if (state.bank < action.cost) return state;
+      return { ...state, bank: state.bank - action.cost, tickets: state.tickets + 1 };
+    }
+
+    case 'ROLL_COLLECTIBLE':
+      return {
+        ...state,
+        tickets: Math.max(0, state.tickets - 1),
+        collectibles: [...(state.collectibles ?? []), action.collectible],
+      };
+
     case 'SET_FLOOR': {
-      const floor = Math.max(1, Math.min(4, action.floor));
+      const floor = Math.max(1, Math.min(5, action.floor));
       const FLOOR_GAMES: Record<number, string[]> = {
         1: ['blackjack', 'roulette', 'slots', 'street-craps', 'wheel-of-fortune', 'duck-race'],
         2: ['penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel'],
         3: ['dragon-tower', 'mine-sweeper', 'baccarat', 'poker'],
-        4: ['case-opening', 'case-battle', 'dragon-tower', 'mine-sweeper', 'baccarat', 'poker', 'plinko', 'hilo', 'crash', 'blackjack'],
+        4: ['case-opening', 'case-battle', 'dragon-tower', 'mine-sweeper', 'baccarat', 'poker', 'plinko', 'hilo'],
+        5: [...ALL_GAMES],
       };
       return {
         ...state,
@@ -142,6 +163,8 @@ interface GameContextValue {
   resetGame: () => void;
   setFloor: (floor: number) => void;
   loadExternalState: (s: GameState) => void;
+  buyTicket: (cost: number) => void;
+  rollCollectible: (c: import('../types').Collectible) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -198,6 +221,8 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     resetGame: useCallback(() => dispatch({ type: 'RESET_GAME' }), []),
     setFloor: useCallback((floor) => dispatch({ type: 'SET_FLOOR', floor }), []),
     loadExternalState,
+    buyTicket: useCallback((cost) => dispatch({ type: 'BUY_TICKET', cost }), []),
+    rollCollectible: useCallback((c) => dispatch({ type: 'ROLL_COLLECTIBLE', collectible: c }), []),
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

@@ -18,6 +18,14 @@ export interface GameHistoryEntry {
   penalty: number;
 }
 
+export interface Collectible {
+  id: string;
+  name: string;
+  emoji: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  obtainedAt: number; // timestamp
+}
+
 export interface GameState {
   day: number;
   floor: number;
@@ -25,6 +33,7 @@ export interface GameState {
   quota: number;
   timeLeft: number;
   tickets: number;
+  collectibles: Collectible[];
   activeGame: string | null;
   gameHistory: GameHistoryEntry[];
   phase: GamePhase;
@@ -41,4 +50,6 @@ export type GameAction =
   | { type: 'START_NEXT_DAY' }
   | { type: 'RESET_GAME' }
   | { type: 'SET_FLOOR'; floor: number }
-  | { type: 'LOAD_STATE'; state: GameState };
+  | { type: 'LOAD_STATE'; state: GameState }
+  | { type: 'BUY_TICKET'; cost: number }
+  | { type: 'ROLL_COLLECTIBLE'; collectible: Collectible };

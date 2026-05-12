@@ -2,59 +2,98 @@ import React, { useEffect, useState } from 'react';
 import { useGame } from '../store/gameStore';
 import { formatMoney } from '../utils/gameLogic';
 
+const CONFETTI_CHARS = ['🎊', '🎉', '✨', '💰', '🏆', '⭐', '💎', '🌟'];
+
+interface Confetti {
+  id: number;
+  char: string;
+  x: number;
+  delay: number;
+  duration: number;
+  size: number;
+}
+
+let confId = 0;
+function makeConfetti(n: number): Confetti[] {
+  return Array.from({ length: n }, () => ({
+    id: confId++,
+    char: CONFETTI_CHARS[Math.floor(Math.random() * CONFETTI_CHARS.length)],
+    x: Math.random() * 100,
+    delay: Math.random() * 2,
+    duration: 2.5 + Math.random() * 2,
+    size: 16 + Math.floor(Math.random() * 20),
+  }));
+}
+
 export function VictoryScreen() {
-  const { state, resetGame } = useGame();
+  const { state, resetGame, startNextDay } = useGame();
   const [visible, setVisible] = useState(false);
+  const [confetti] = useState(() => makeConfetti(40));
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 80);
     return () => clearTimeout(t);
   }, []);
 
-  const isGoodEnding = state.bank >= 500_000;
   const totalProfit = state.bank - 1000;
+  const quotasHit = state.gameHistory.filter(h => h.quotaHit).length;
 
   return (
-    <div className={`overlay-screen ${visible ? 'overlay-visible' : ''}`}>
-      <div className="end-card">
-        {isGoodEnding ? (
-          <>
-            <div className="end-icon">🏆</div>
-            <h1 className="end-title gold">GOOD ENDING</h1>
-            <p className="end-sub">You beat the casino.</p>
-          </>
-        ) : (
-          <>
-            <div className="end-icon">🚗</div>
-            <h1 className="end-title" style={{ color: '#aaa' }}>
-              NEUTRAL ENDING
-            </h1>
-            <p className="end-sub">You survived, but barely.</p>
-          </>
-        )}
+    <div className={`overlay-screen victory-overlay ${visible ? 'overlay-visible' : ''}`}>
+      {/* Confetti rain */}
+      <div className="confetti-container" aria-hidden>
+        {confetti.map(c => (
+          <span
+            key={c.id}
+            className="confetti-piece"
+            style={{
+              left: `${c.x}%`,
+              animationDelay: `${c.delay}s`,
+              animationDuration: `${c.duration}s`,
+              fontSize: `${c.size}px`,
+            }}
+          >
+            {c.char}
+          </span>
+        ))}
+      </div>
 
-        <div className="end-stats">
-          <div className="stat-row">
-            <span className="stat-label">Final bank</span>
-            <span className="stat-value mono gold">{formatMoney(state.bank)}</span>
+      <div className="victory-card">
+        <div className="victory-glow-ring" />
+
+        <div className="victory-icon">🏆</div>
+        <h1 className="victory-title">YOU OWN<br />THE TOWER</h1>
+        <p className="victory-sub">Floor 5 conquered. The casino is yours.</p>
+
+        <div className="victory-stats">
+          <div className="vstat">
+            <span className="vstat-label">Final Bank</span>
+            <span className="vstat-value gold">{formatMoney(state.bank)}</span>
           </div>
-          <div className="stat-row">
-            <span className="stat-label">Total profit</span>
-            <span className={`stat-value mono ${totalProfit >= 0 ? 'win' : 'loss'}`}>
+          <div className="vstat">
+            <span className="vstat-label">Total Profit</span>
+            <span className={`vstat-value ${totalProfit >= 0 ? 'win' : 'loss'}`}>
               {totalProfit >= 0 ? '+' : ''}{formatMoney(totalProfit)}
             </span>
           </div>
-          <div className="stat-row">
-            <span className="stat-label">Quotas hit</span>
-            <span className="stat-value mono">
-              {state.gameHistory.filter((h) => h.quotaHit).length} / {state.gameHistory.length}
-            </span>
+          <div className="vstat">
+            <span className="vstat-label">Quotas Hit</span>
+            <span className="vstat-value">{quotasHit} / {state.gameHistory.length}</span>
+          </div>
+          <div className="vstat">
+            <span className="vstat-label">Collectibles</span>
+            <span className="vstat-value">{(state.collectibles ?? []).length}</span>
           </div>
         </div>
 
-        <button className="btn-primary" onClick={resetGame}>
-          PLAY AGAIN
-        </button>
+        <div className="victory-actions">
+          <button className="btn-primary victory-btn-keep" onClick={startNextDay}>
+            🎰 KEEP PLAYING
+          </button>
+          <button className="btn-secondary" onClick={resetGame}>
+            NEW GAME
+          </button>
+        </div>
       </div>
     </div>
   );

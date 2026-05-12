@@ -8,17 +8,25 @@ const FLOOR_GAMES: Record<number, string[]> = {
   4: ['dragon-tower', 'mine-sweeper', 'baccarat', 'poker', 'plinko', 'hilo'],
 };
 
-// Floor 4 always includes both case games, plus 2 random from the pool
 const FLOOR4_FIXED = ['case-opening', 'case-battle'];
+
+const ALL_GAMES_F5 = [
+  'blackjack', 'roulette', 'slots', 'street-craps', 'wheel-of-fortune', 'duck-race',
+  'penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel',
+  'dragon-tower', 'mine-sweeper', 'baccarat', 'poker',
+  'case-opening', 'case-battle',
+];
 
 export function getFloorForDay(day: number): number {
   if (day <= 3) return 1;
   if (day <= 6) return 2;
   if (day <= 9) return 3;
-  return 4;
+  if (day <= 12) return 4;
+  return 5;
 }
 
 export function getAvailableGames(floor: number, seed: number): string[] {
+  if (floor === 5) return ALL_GAMES_F5;
   const pool = [...(FLOOR_GAMES[floor] ?? FLOOR_GAMES[1])];
   const rng = createRNG(seed);
   for (let i = pool.length - 1; i > 0; i--) {
@@ -26,13 +34,16 @@ export function getAvailableGames(floor: number, seed: number): string[] {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   if (floor === 4) {
-    // Always show case-opening and case-battle, plus 2 random from the pool
     return [...FLOOR4_FIXED, ...pool.slice(0, 2)];
   }
   return pool.slice(0, Math.min(4, pool.length));
 }
 
 export function quotaForDay(day: number): number {
+  // Days 13-15: floor 5 — quota jumps to $10B and doubles each day
+  if (day === 13) return 10_000_000_000;
+  if (day === 14) return 20_000_000_000;
+  if (day === 15) return 40_000_000_000;
   let q = 2000;
   for (let i = 1; i < day; i++) q = Math.round(q * 1.6);
   return q;
@@ -68,7 +79,7 @@ export function applyDayEnd(state: GameState): {
   let phase: GamePhase;
   if (endBank <= 0) {
     phase = 'game-over';
-  } else if (state.day >= 12) {
+  } else if (state.day >= 15) {
     phase = 'victory';
   } else {
     phase = 'day-end';
@@ -89,6 +100,7 @@ export function createInitialState(): GameState {
     quota,
     timeLeft: 300,
     tickets: 0,
+    collectibles: [],
     activeGame: null,
     gameHistory: [],
     phase: 'playing',
@@ -98,9 +110,13 @@ export function createInitialState(): GameState {
 }
 
 export function formatMoney(n: number): string {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}K`;
-  return `$${n.toLocaleString()}`;
+  const sign = n < 0 ? '-' : '';
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000_000_000) return `${sign}$${(abs / 1_000_000_000_000).toFixed(2)}T`;
+  if (abs >= 1_000_000_000)     return `${sign}$${(abs / 1_000_000_000).toFixed(2)}B`;
+  if (abs >= 1_000_000)         return `${sign}$${(abs / 1_000_000).toFixed(2)}M`;
+  if (abs >= 1_000)             return `${sign}$${(abs / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}K`;
+  return `${sign}$${abs.toLocaleString()}`;
 }
 
 export function formatTime(seconds: number): string {

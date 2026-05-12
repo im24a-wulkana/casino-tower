@@ -9,7 +9,7 @@ interface TopBarProps {
 
 export function TopBar({ onLogout, username, isDev }: TopBarProps) {
   const { state } = useGame();
-  const floorLabel = ['', 'LOBBY', 'MEZZANINE', 'HIGH STAKES', 'PENTHOUSE'][state.floor];
+  const floorLabel = ['', 'LOBBY', 'MEZZANINE', 'HIGH STAKES', 'PENTHOUSE', 'LEGEND'][state.floor];
 
   return (
     <header className="topbar">
@@ -22,7 +22,7 @@ export function TopBar({ onLogout, username, isDev }: TopBarProps) {
       <div className="topbar-day">
         <span className="topbar-day-label">DAY</span>
         <span className="topbar-day-num">{isDev ? '∞' : state.day}</span>
-        {!isDev && <span className="topbar-day-label">/ 12</span>}
+        {!isDev && <span className="topbar-day-label">/ 15</span>}
       </div>
       <div className="topbar-user">
         <span className="topbar-username mono">{username}</span>

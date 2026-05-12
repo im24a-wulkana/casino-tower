@@ -5,8 +5,8 @@ import { CASES, CaseDef, CaseItem, rollItem, oddsPercent, formatVal } from './ca
 
 type Phase = 'select' | 'preview' | 'spinning' | 'result';
 
-const REEL_ITEMS = 40; // items shown in the reel strip
-const ITEM_W = 96;     // px per item in reel
+const REEL_ITEMS = 44;
+const ITEM_STRIDE = 100; // 96px width + 4px gap
 
 export function CaseOpening() {
   const { state: gs, updateBank, setActiveGame, declareBankruptcy } = useGame();
@@ -15,26 +15,26 @@ export function CaseOpening() {
   const [previewCase, setPreviewCase] = useState<CaseDef | null>(null);
   const [wonItem, setWonItem] = useState<CaseItem | null>(null);
   const [reelItems, setReelItems] = useState<CaseItem[]>([]);
-  const [reelOffset, setReelOffset] = useState(0);
+  const stopIdxRef = useRef(0);
   const reelRef = useRef<HTMLDivElement>(null);
   const { toast, show } = useGameToast();
 
   const canAfford = (c: CaseDef) => gs.bank >= c.price;
-
-  const STOP_IDX = REEL_ITEMS - 6; // reel stops here, winner placed at this index
 
   const openCase = (c: CaseDef) => {
     if (gs.bank < c.price) return;
     updateBank(-c.price);
     setSelectedCase(c);
 
-    // Build reel: random items, winner placed exactly at STOP_IDX
+    // Pick a random stop index in the last third of the reel for variety
+    const stopIdx = Math.floor(REEL_ITEMS * 0.65) + Math.floor(Math.random() * 8);
+    stopIdxRef.current = stopIdx;
+
     const result = rollItem(c);
     const reel: CaseItem[] = Array.from({ length: REEL_ITEMS }, (_, i) =>
-      i === STOP_IDX ? result : rollItem(c)
+      i === stopIdx ? result : rollItem(c)
     );
     setReelItems(reel);
-    setReelOffset(0);
     setWonItem(null);
     setPhase('spinning');
   };
@@ -45,11 +45,11 @@ export function CaseOpening() {
     const el = reelRef.current;
     if (!el) return;
 
+    const stopIdx = stopIdxRef.current;
     const containerW = el.parentElement!.offsetWidth;
-    const centerOffset = containerW / 2 - ITEM_W / 2;
-    // Sub-item random jitter so reel doesn't always stop dead-center
-    const jitter = (Math.random() - 0.5) * (ITEM_W * 0.6);
-    const targetOffset = STOP_IDX * ITEM_W - centerOffset + jitter;
+    // Center the winning item exactly under the marker
+    const centerOffset = containerW / 2 - 96 / 2; // 96 = item visual width
+    const targetOffset = stopIdx * ITEM_STRIDE - centerOffset;
 
     el.style.transition = 'none';
     el.style.transform = 'translateX(0)';
@@ -62,7 +62,7 @@ export function CaseOpening() {
     });
 
     const timeout = setTimeout(() => {
-      const won = reelItems[STOP_IDX];
+      const won = reelItems[stopIdx];
       setWonItem(won);
       updateBank(won.value);
       const net = won.value - selectedCase!.price;
