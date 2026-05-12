@@ -97,6 +97,12 @@ export function CaseBattle() {
     if (!activeBattle) return;
     const unsub = subscribeToBattle(activeBattle.id, fresh => {
       setActiveBattle(fresh);
+      // Auto-start if all slots filled and we're the host
+      const isHost = fresh.players[0].slotId === mySlotId.current;
+      const allFilled = fresh.players.every(p => p.type !== 'empty');
+      if (isHost && fresh.status === 'waiting' && allFilled) {
+        runBattle(fresh);
+      }
       // Pay out when battle finishes and we haven't paid yet
       if (fresh.status === 'done' && !paidOutRef.current) {
         paidOutRef.current = true;
@@ -116,7 +122,7 @@ export function CaseBattle() {
       }
     });
     return unsub;
-  }, [activeBattle?.id]);
+  }, [activeBattle?.id, runBattle]);
 
   const fee       = pickedCases.reduce((s, id) => s + (CASES.find(c => c.id === id)?.price ?? 0), 0);
   const numSlots  = totalSlots(mode);
@@ -191,23 +197,23 @@ export function CaseBattle() {
     };
     await saveBattle(updated);
     setActiveBattle(updated);
+    // Auto-start immediately after filling all bots
+    await runBattle(updated);
   };
 
-  // ── Start battle (host only) — reveals one case at a time across all players simultaneously
-  const startBattle = useCallback(async () => {
-    if (!activeBattle) return;
-    if (!activeBattle.players.every(p => p.type !== 'empty')) return;
+  // ── Run battle — the core logic that reveals items and resolves winner
+  const runBattle = useCallback(async (battle: LobbyBattle) => {
+    if (battle.status !== 'waiting' || !battle.players.every(p => p.type !== 'empty')) return;
 
-    const numCases = activeBattle.caseIds.length;
-    const numPlayers = activeBattle.players.length;
+    const numCases = battle.caseIds.length;
 
     // Roll all items upfront
-    const allItems: CaseItem[][] = activeBattle.players.map(() =>
-      activeBattle.caseIds.map(cId => rollItem(CASES.find(c => c.id === cId)!))
+    const allItems: CaseItem[][] = battle.players.map(() =>
+      battle.caseIds.map(cId => rollItem(CASES.find(c => c.id === cId)!))
     );
 
     // Mark running
-    const running: LobbyBattle = { ...activeBattle, status: 'running' };
+    const running: LobbyBattle = { ...battle, status: 'running' };
     await saveBattle(running);
     setActiveBattle(running);
 
@@ -215,7 +221,7 @@ export function CaseBattle() {
     let current: LobbyBattle = running;
     for (let ci = 0; ci < numCases; ci++) {
       await new Promise(res => setTimeout(res, 1200));
-      const fresh = await getBattle(activeBattle.id) ?? current;
+      const fresh = await getBattle(battle.id) ?? current;
       const next: LobbyBattle = {
         ...fresh,
         players: fresh.players.map((p, pi) => ({
@@ -239,7 +245,13 @@ export function CaseBattle() {
     const resolved: LobbyBattle = { ...current, status: 'done', teamTotals: totals, winningTeams: winners };
     await saveBattle(resolved);
     setActiveBattle(resolved);
-  }, [activeBattle]);
+  }, []);
+
+  // ── Start battle (host calls this)
+  const startBattle = useCallback(async () => {
+    if (!activeBattle) return;
+    await runBattle(activeBattle);
+  }, [activeBattle, runBattle]);
 
   // ── Leave
   const leaveBattle = async () => {
@@ -408,6 +420,7 @@ export function CaseBattle() {
                   <span>{c.emoji}</span>
                   <span className="cb-case-chip-name">{c.name}</span>
                   <span className="cb-case-chip-price">{formatVal(c.price)}</span>
+                  <span className={`cb-risk-badge cb-risk-${c.risk}`}>{c.risk.toUpperCase()}</span>
                 </button>
                 <button className="cb-preview-btn" onClick={() => setPreviewCase(c)}>👁</button>
               </div>
@@ -503,10 +516,11 @@ export function CaseBattle() {
 
           {activeBattle.status === 'waiting' && amHost && (
             <div className="cb-host-controls">
-              <button className="btn-secondary" onClick={fillAllBots}>FILL WITH BOTS</button>
-              <button className="btn-primary" disabled={!allFilled} onClick={startBattle}>
-                START BATTLE
-              </button>
+              {!allFilled ? (
+                <button className="btn-primary" onClick={fillAllBots}>ADD BOTS & START</button>
+              ) : (
+                <div style={{ textAlign: 'center', color: '#999' }}>Waiting for battle to start…</div>
+              )}
             </div>
           )}
           {activeBattle.status === 'waiting' && !amHost && (

@@ -121,6 +121,10 @@ export function CaseOpening() {
                 <button className="case-preview-btn" onClick={() => setPreviewCase(c)}>PREVIEW</button>
                 <div className="case-card-emoji">{c.emoji}</div>
                 <div className="case-card-name">{c.name}</div>
+                <div className={`co-risk co-risk-${c.risk}`}>
+                  {'●'.repeat(c.risk === 'low' ? 1 : c.risk === 'medium' ? 2 : 3)}
+                  {' '}{c.risk === 'low' ? 'LOW' : c.risk === 'medium' ? 'MED' : 'HIGH'} RISK
+                </div>
                 <div className="case-card-price">{formatVal(c.price)}</div>
                 <button
                   className="case-open-btn"
