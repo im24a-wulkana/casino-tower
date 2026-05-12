@@ -29,6 +29,8 @@ export function TicketShop() {
   const [stopIndices, setStopIndices] = useState<Record<string, number>>({});
 
   const reelRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const activeSpinsRef = useRef<Set<string>>(new Set());
+  const timeoutIdsRef = useRef<Record<string, NodeJS.Timeout>>({});
 
   const [machineTickets, setMachineTickets] = useState<MachineTickets>(() => {
     try {
@@ -54,7 +56,7 @@ export function TicketShop() {
   const handleSpin = (machine: MachineDef) => {
     const t = ticketsForMachine(machine.id);
     if (!isDev && t <= 0) return;
-    if (spinningMachines.has(machine.id)) return;
+    if (activeSpinsRef.current.has(machine.id)) return;
 
     const winner = rollFromMachine(machine.id);
     const idx = stopIdxForSpin();
@@ -68,7 +70,8 @@ export function TicketShop() {
       saveMachineTickets(mt as MachineTickets);
     }
 
-    setSpinningMachines(prev => new Set([...prev, machine.id]));
+    activeSpinsRef.current.add(machine.id);
+    setSpinningMachines(new Set(activeSpinsRef.current));
     setReels(prev => ({ ...prev, [machine.id]: reelItems }));
     setStopIndices(prev => ({ ...prev, [machine.id]: idx }));
     setResults(prev => ({ ...prev, [machine.id]: null }));
@@ -77,14 +80,12 @@ export function TicketShop() {
 
   // Animate each reel independently
   useEffect(() => {
-    const timeoutIds: NodeJS.Timeout[] = [];
-
     spinningMachines.forEach(machineId => {
       const el = reelRefs.current[machineId];
       if (!el || !reels[machineId]) return;
 
       const idx = stopIndices[machineId];
-      const itemHeight = 110;
+      const itemHeight = 150;
       const targetOffset = idx * itemHeight;
 
       el.style.transition = 'none';
@@ -97,30 +98,40 @@ export function TicketShop() {
         });
       });
 
+      // Clear any existing timeout for this machine
+      if (timeoutIdsRef.current[machineId]) {
+        clearTimeout(timeoutIdsRef.current[machineId]);
+      }
+
       const timeoutId = setTimeout(() => {
         const won = reels[machineId][idx];
         setResults(prev => ({ ...prev, [machineId]: won }));
         const collectible: Collectible = { ...won, obtainedAt: Date.now() };
         rollCollectible(collectible);
-        setSpinningMachines(prev => {
-          const next = new Set(prev);
-          next.delete(machineId);
-          if (next.size === 0) {
-            setPhase('result');
-          }
-          return next;
-        });
+
+        activeSpinsRef.current.delete(machineId);
+        delete timeoutIdsRef.current[machineId];
+
+        if (activeSpinsRef.current.size === 0) {
+          setPhase('result');
+        }
+        setSpinningMachines(new Set(activeSpinsRef.current));
       }, 2600);
 
-      timeoutIds.push(timeoutId);
+      timeoutIdsRef.current[machineId] = timeoutId;
     });
 
     return () => {
-      timeoutIds.forEach(id => clearTimeout(id));
+      // Cleanup function - don't clear timeouts here, let them finish
     };
   }, [spinningMachines, reels, stopIndices, rollCollectible]);
 
   const reset = () => {
+    // Clear any pending timeouts
+    Object.values(timeoutIdsRef.current).forEach(id => clearTimeout(id));
+    timeoutIdsRef.current = {};
+    activeSpinsRef.current.clear();
+
     setPhase('idle');
     setResults({});
     setReels({});

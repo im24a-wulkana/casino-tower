@@ -100,16 +100,16 @@ export function Sidebar() {
             <>
               {[...collectibles]
                 .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
-                .slice(0, 3)
+                .slice(0, 2)
                 .map((c, i) => (
                   <div key={i} className="collectible-card" style={{ borderColor: rarityColor(c.rarity) }} title={c.name}>
                     <span className="cc-emoji">{c.emoji}</span>
                     <span className="cc-rarity">{c.rarity[0].toUpperCase()}</span>
                   </div>
                 ))}
-              {collectibles.length > 3 && (
+              {collectibles.length > 2 && (
                 <button className="collectible-view-all" onClick={() => setShowCollectionModal(true)}>
-                  +{collectibles.length - 3}<br/>More
+                  +{collectibles.length - 2}<br/>More
                 </button>
               )}
             </>
