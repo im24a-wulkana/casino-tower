@@ -88,7 +88,12 @@ export function CaseBattle() {
 
   // ── Load lobby + subscribe to realtime updates
   useEffect(() => {
-    readBattles().then(setLobbies);
+    readBattles()
+      .then(setLobbies)
+      .catch((err) => {
+        console.error('Failed to load battles:', err);
+        setLobbies([]);
+      });
     const unsub = subscribeToLobby(setLobbies);
     return unsub;
   }, []);
@@ -96,8 +101,9 @@ export function CaseBattle() {
   // ── Subscribe to active battle via Realtime
   useEffect(() => {
     if (!activeBattle) return;
-    const unsub = subscribeToBattle(activeBattle.id, fresh => {
-      setActiveBattle(fresh);
+    try {
+      const unsub = subscribeToBattle(activeBattle.id, fresh => {
+        setActiveBattle(fresh);
       // Auto-start if all slots filled and we're the host
       const isHost = fresh.players[0].slotId === mySlotId.current;
       const allFilled = fresh.players.every(p => p.type !== 'empty');
@@ -121,8 +127,12 @@ export function CaseBattle() {
           }
         }
       }
-    });
-    return unsub;
+      });
+      return unsub;
+    } catch (err) {
+      console.error('Failed to subscribe to battle:', err);
+      return () => {};
+    }
   }, [activeBattle?.id, runBattle]);
 
   const fee       = pickedCases.reduce((s, id) => s + (CASES.find(c => c.id === id)?.price ?? 0), 0);
