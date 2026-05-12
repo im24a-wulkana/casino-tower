@@ -8,6 +8,7 @@ import { GameGrid } from './components/GameGrid';
 import { DayEndScreen } from './components/DayEndScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 import { VictoryScreen } from './components/VictoryScreen';
+import { PauseScreen } from './components/PauseScreen';
 
 // Floor 1
 import { Blackjack } from './games/Blackjack';
@@ -32,6 +33,7 @@ import { Baccarat } from './games/Baccarat';
 import { Poker } from './games/Poker';
 import { CaseOpening } from './games/CaseOpening';
 import { CaseBattle } from './games/CaseBattle';
+import { TicketShop } from './games/TicketShop';
 
 const GAME_COMPONENTS: Record<string, React.ComponentType> = {
   blackjack:          Blackjack,
@@ -52,22 +54,24 @@ const GAME_COMPONENTS: Record<string, React.ComponentType> = {
   poker:              Poker,
   'case-opening':     CaseOpening,
   'case-battle':      CaseBattle,
+  'ticket-shop':      TicketShop,
 };
 
 function Casino() {
-  const { state, isDev } = useGame();
+  const { state, isDev, pause } = useGame();
   const { logout, username } = useAuth();
   const ActiveGame = state.activeGame ? GAME_COMPONENTS[state.activeGame] : null;
 
   return (
     <div className="app" data-floor={state.floor}>
-      <TopBar onLogout={logout} username={username} isDev={isDev} />
+      <TopBar onLogout={logout} username={username} isDev={isDev} onPause={state.phase === 'playing' ? pause : undefined} />
       <div className="main-layout">
         <Sidebar />
         <main className="main-content">
           {ActiveGame ? <ActiveGame /> : <GameGrid />}
         </main>
       </div>
+      {state.phase === 'paused'    && <PauseScreen />}
       {state.phase === 'day-end'   && <DayEndScreen />}
       {state.phase === 'game-over' && <GameOverScreen />}
       {state.phase === 'victory'   && <VictoryScreen />}

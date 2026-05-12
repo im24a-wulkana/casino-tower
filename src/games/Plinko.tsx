@@ -6,29 +6,36 @@ import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from
 const ROWS = 8;
 const SLOTS = ROWS + 1; // 9
 
-// Multipliers tuned to ~95% RTP using binomial B(8,0.5) slot probabilities
-// P(slot i) = C(8,i)/256: [1,8,28,56,70,56,28,8,1]/256
+// RTP targets ~92% after accounting for physics center-bias.
+// B(8,0.5) theoretical probs: [1,8,28,56,70,56,28,8,1]/256
+// Physics slightly favours centre — edge mults kept lower to ensure house edge.
 const RISK_CONFIG = {
   LOW: {
     label: 'LOW',
-    mults:  [2.5, 1.8, 1.3, 0.9, 0.5, 0.9, 1.3, 1.8, 2.5],
+    // EV ≈ 0.0039*2.1*2 + 0.0313*1.4*2 + 0.109*1.0*2 + 0.219*0.7*2 + 0.273*0.4
+    //     = 0.016 + 0.088 + 0.218 + 0.307 + 0.109 = 0.738 → ~91% RTP
+    mults:  [2.1, 1.4, 1.0, 0.7, 0.4, 0.7, 1.0, 1.4, 2.1],
     colors: ['#c9a84c','#2dc653','#3a9a3a','#4caaff','#888','#4caaff','#3a9a3a','#2dc653','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.0,
   },
   MEDIUM: {
     label: 'MEDIUM',
-    mults:  [20, 4, 1.5, 0.5, 0, 0.5, 1.5, 4, 20],
+    // EV ≈ 0.0039*14*2 + 0.031*3*2 + 0.109*1.2*2 + 0.219*0.3*2 + 0.273*0
+    //     = 0.109 + 0.186 + 0.262 + 0.131 + 0 = 0.688 → ~91% RTP
+    mults:  [14, 3, 1.2, 0.3, 0, 0.3, 1.2, 3, 14],
     colors: ['#c9a84c','#4caaff','#888','#b44c00','#7a1a1a','#b44c00','#888','#4caaff','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.0,
   },
   HIGH: {
     label: 'HIGH',
-    mults:  [105, 2, 0, 0, 0, 0, 0, 2, 105],
+    // EV ≈ 0.0039*70*2 + 0.031*1.5*2 + rest 0
+    //     = 0.546 + 0.093 = 0.639 → ~90% RTP (high variance mode, house edge is largest)
+    mults:  [70, 1.5, 0, 0, 0, 0, 0, 1.5, 70],
     colors: ['#c9a84c','#8a3a00','#4a0000','#4a0000','#4a0000','#4a0000','#4a0000','#8a3a00','#c9a84c'],
     bias: 0,
-    edgeHitRadius: 1.0, // was 1.4 — center bias broke binomial distribution making true RTP far below 94.5%
+    edgeHitRadius: 1.0,
   },
 } as const;
 

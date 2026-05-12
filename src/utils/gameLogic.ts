@@ -14,7 +14,7 @@ const ALL_GAMES_F5 = [
   'blackjack', 'roulette', 'slots', 'street-craps', 'wheel-of-fortune', 'duck-race',
   'penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel',
   'dragon-tower', 'mine-sweeper', 'baccarat', 'poker',
-  'case-opening', 'case-battle',
+  'case-opening', 'case-battle', 'ticket-shop',
 ];
 
 export function getFloorForDay(day: number): number {
@@ -88,7 +88,7 @@ export function applyDayEnd(state: GameState): {
   return { endBank, penalty, quotaHit, entry, phase };
 }
 
-export function createInitialState(): GameState {
+export function createInitialState(overrides?: Partial<GameState>): GameState {
   const day = 1;
   const floor = 1;
   const bank = 1000;
@@ -99,13 +99,15 @@ export function createInitialState(): GameState {
     bank,
     quota,
     timeLeft: 300,
-    tickets: 0,
-    collectibles: [],
+    tickets: overrides?.tickets ?? 0,
+    collectibles: overrides?.collectibles ?? [],
     activeGame: null,
     gameHistory: [],
     phase: 'playing',
     dailyStartBank: bank,
     availableGames: getAvailableGames(floor, day * 137 + 42),
+    winCount: overrides?.winCount ?? 0,
+    incomeMultiplier: overrides?.incomeMultiplier ?? 1,
   };
 }
 
@@ -144,4 +146,5 @@ export const GAME_META: Record<string, { name: string; floor: number; descriptio
   poker: { name: '1P Poker', floor: 3, description: '5-card draw vs. house. Swap up to 3 cards.' },
   'case-opening': { name: 'Case Opening', floor: 4, description: 'Open one of 10 cases. High risk, massive rewards.' },
   'case-battle': { name: 'Case Battle', floor: 4, description: '1v1, 2v2, FFA or CRAZY. Highest value takes the pot.' },
+  'ticket-shop': { name: 'Ticket Shop', floor: 5, description: 'Buy tickets, spin for collectibles. 3 machine tiers.' },
 };

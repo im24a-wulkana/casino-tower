@@ -7,7 +7,7 @@ export interface Card {
   faceDown?: boolean;
 }
 
-export type GamePhase = 'playing' | 'day-end' | 'game-over' | 'victory';
+export type GamePhase = 'playing' | 'paused' | 'day-end' | 'game-over' | 'victory';
 
 export interface GameHistoryEntry {
   day: number;
@@ -39,6 +39,9 @@ export interface GameState {
   phase: GamePhase;
   dailyStartBank: number;
   availableGames: string[];
+  // Persist across resets
+  winCount: number;          // how many times player has cleared floor 5
+  incomeMultiplier: number;  // 1.2^winCount — applied to all bank gains
 }
 
 export type GameAction =
@@ -48,8 +51,12 @@ export type GameAction =
   | { type: 'TICK_TIMER' }
   | { type: 'END_DAY_MANUAL' }
   | { type: 'START_NEXT_DAY' }
-  | { type: 'RESET_GAME' }
+  | { type: 'ASCEND' }              // on day 15: bump multiplier, reset to day 1
+  | { type: 'RESET_GAME' }          // fresh start (game-over / new-game button)
+  | { type: 'NEW_RUN' }             // after victory: preserve collectibles + bump multiplier
+  | { type: 'PAUSE' }               // pause game
+  | { type: 'RESUME' }              // resume game
   | { type: 'SET_FLOOR'; floor: number }
   | { type: 'LOAD_STATE'; state: GameState }
-  | { type: 'BUY_TICKET'; cost: number }
+  | { type: 'BUY_TICKET'; cost: number; machineId: string }
   | { type: 'ROLL_COLLECTIBLE'; collectible: Collectible };

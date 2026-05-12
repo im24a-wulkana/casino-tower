@@ -5,12 +5,7 @@ import { formatMoney } from '../utils/gameLogic';
 const CONFETTI_CHARS = ['🎊', '🎉', '✨', '💰', '🏆', '⭐', '💎', '🌟'];
 
 interface Confetti {
-  id: number;
-  char: string;
-  x: number;
-  delay: number;
-  duration: number;
-  size: number;
+  id: number; char: string; x: number; delay: number; duration: number; size: number;
 }
 
 let confId = 0;
@@ -26,7 +21,7 @@ function makeConfetti(n: number): Confetti[] {
 }
 
 export function VictoryScreen() {
-  const { state, resetGame, startNextDay } = useGame();
+  const { state, newRun, resetGame } = useGame();
   const [visible, setVisible] = useState(false);
   const [confetti] = useState(() => makeConfetti(40));
 
@@ -37,30 +32,23 @@ export function VictoryScreen() {
 
   const totalProfit = state.bank - 1000;
   const quotasHit = state.gameHistory.filter(h => h.quotaHit).length;
+  const nextMult = Math.pow(1.2, (state.winCount ?? 0) + 1);
 
   return (
     <div className={`overlay-screen victory-overlay ${visible ? 'overlay-visible' : ''}`}>
-      {/* Confetti rain */}
       <div className="confetti-container" aria-hidden>
         {confetti.map(c => (
-          <span
-            key={c.id}
-            className="confetti-piece"
-            style={{
-              left: `${c.x}%`,
-              animationDelay: `${c.delay}s`,
-              animationDuration: `${c.duration}s`,
-              fontSize: `${c.size}px`,
-            }}
-          >
-            {c.char}
-          </span>
+          <span key={c.id} className="confetti-piece" style={{
+            left: `${c.x}%`,
+            animationDelay: `${c.delay}s`,
+            animationDuration: `${c.duration}s`,
+            fontSize: `${c.size}px`,
+          }}>{c.char}</span>
         ))}
       </div>
 
       <div className="victory-card">
         <div className="victory-glow-ring" />
-
         <div className="victory-icon">🏆</div>
         <h1 className="victory-title">YOU OWN<br />THE TOWER</h1>
         <p className="victory-sub">Floor 5 conquered. The casino is yours.</p>
@@ -86,12 +74,18 @@ export function VictoryScreen() {
           </div>
         </div>
 
+        {/* New run bonus */}
+        <div className="victory-bonus-banner">
+          🔥 NEW RUN BONUS: <strong style={{ color: '#ffe066' }}>×{nextMult.toFixed(2)} income</strong>
+          &nbsp;forever
+        </div>
+
         <div className="victory-actions">
-          <button className="btn-primary victory-btn-keep" onClick={startNextDay}>
-            🎰 KEEP PLAYING
+          <button className="btn-primary victory-btn-keep" onClick={newRun}>
+            🔄 NEW RUN ({nextMult.toFixed(2)}× income)
           </button>
           <button className="btn-secondary" onClick={resetGame}>
-            NEW GAME
+            FRESH START
           </button>
         </div>
       </div>

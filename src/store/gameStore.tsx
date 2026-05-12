@@ -12,7 +12,7 @@ const ALL_GAMES = [
   'blackjack', 'roulette', 'slots', 'street-craps', 'wheel-of-fortune', 'duck-race',
   'penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel',
   'dragon-tower', 'mine-sweeper', 'baccarat', 'poker',
-  'case-opening', 'case-battle',
+  'case-opening', 'case-battle', 'ticket-shop',
 ];
 
 function makeDevState(): GameState {
@@ -21,7 +21,8 @@ function makeDevState(): GameState {
     bank: 999_999_999_999,
     floor: 5,
     quota: 0,
-    availableGames: [...ALL_GAMES],
+    tickets: 999,
+    availableGames: [...ALL_GAMES, 'ticket-shop'],
   };
 }
 
@@ -31,9 +32,11 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
       return { ...state, activeGame: action.game };
 
     case 'UPDATE_BANK': {
-      // Dev mode: bank never changes
       if (action.isDev) return state;
-      const newBank = Math.max(0, state.bank + action.delta);
+      // Apply income multiplier to positive gains only
+      const mult = state.incomeMultiplier ?? 1;
+      const delta = action.delta > 0 ? action.delta * mult : action.delta;
+      const newBank = Math.max(0, state.bank + delta);
       return { ...state, bank: newBank };
     }
 
@@ -112,7 +115,45 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
     }
 
     case 'RESET_GAME':
-      return createInitialState();
+      // Full reset — keep collectibles + tickets so they're never lost
+      return createInitialState({
+        collectibles: state.collectibles ?? [],
+        tickets: state.tickets ?? 0,
+        winCount: state.winCount ?? 0,
+        incomeMultiplier: state.incomeMultiplier ?? 1,
+      });
+
+    case 'NEW_RUN': {
+      // After victory: bump win count, apply 1.2x multiplier stack
+      const newWinCount = (state.winCount ?? 0) + 1;
+      const newMult = Math.pow(1.2, newWinCount);
+      return createInitialState({
+        collectibles: state.collectibles ?? [],
+        tickets: state.tickets ?? 0,
+        winCount: newWinCount,
+        incomeMultiplier: newMult,
+      });
+    }
+
+    case 'ASCEND': {
+      // Day 15: bump multiplier and reset to day 1
+      const newWinCount = (state.winCount ?? 0) + 1;
+      const newMult = Math.pow(1.2, newWinCount);
+      return createInitialState({
+        collectibles: state.collectibles ?? [],
+        tickets: state.tickets ?? 0,
+        winCount: newWinCount,
+        incomeMultiplier: newMult,
+      });
+    }
+
+    case 'PAUSE':
+      if (state.phase === 'playing') return { ...state, phase: 'paused' };
+      return state;
+
+    case 'RESUME':
+      if (state.phase === 'paused') return { ...state, phase: 'playing' };
+      return state;
 
     case 'LOAD_STATE':
       return { ...action.state };
@@ -120,7 +161,7 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
     case 'BUY_TICKET': {
       if (action.isDev) return { ...state, tickets: state.tickets + 1 };
       if (state.bank < action.cost) return state;
-      return { ...state, bank: state.bank - action.cost, tickets: state.tickets + 1 };
+      return { ...state, bank: state.bank - action.cost, tickets: (state.tickets ?? 0) + 1 };
     }
 
     case 'ROLL_COLLECTIBLE':
@@ -137,7 +178,7 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
         2: ['penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel'],
         3: ['dragon-tower', 'mine-sweeper', 'baccarat', 'poker'],
         4: ['case-opening', 'case-battle', 'dragon-tower', 'mine-sweeper', 'baccarat', 'poker', 'plinko', 'hilo'],
-        5: [...ALL_GAMES],
+        5: ALL_GAMES,
       };
       return {
         ...state,
@@ -160,11 +201,15 @@ interface GameContextValue {
   declareBankruptcy: () => void;
   endDayManual: () => void;
   startNextDay: () => void;
+  ascend: () => void;
   resetGame: () => void;
   setFloor: (floor: number) => void;
   loadExternalState: (s: GameState) => void;
-  buyTicket: (cost: number) => void;
+  pause: () => void;
+  resume: () => void;
+  buyTicket: (cost: number, machineId: string) => void;
   rollCollectible: (c: import('../types').Collectible) => void;
+  newRun: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -192,13 +237,14 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     onStateChange?.(state);
   }, [state]);
 
-  // Timer tick
+  // Timer tick (skip if paused or dev, or if last day)
   useEffect(() => {
     if (isDev) return;
     if (state.phase !== 'playing') return;
+    if (state.day >= 15) return; // Last day has infinite time
     const id = setInterval(() => dispatch({ type: 'TICK_TIMER' }), 1000);
     return () => clearInterval(id);
-  }, [state.phase, isDev]);
+  }, [state.phase, state.day, isDev]);
 
   const loadExternalState = useCallback((s: GameState) => {
     dispatch({ type: 'LOAD_STATE', state: s });
@@ -218,11 +264,15 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     declareBankruptcy: useCallback(() => dispatch({ type: 'DECLARE_BANKRUPTCY' }), []),
     endDayManual: useCallback(() => dispatch({ type: 'END_DAY_MANUAL' }), []),
     startNextDay: useCallback(() => dispatch({ type: 'START_NEXT_DAY' }), []),
+    ascend: useCallback(() => dispatch({ type: 'ASCEND' }), []),
     resetGame: useCallback(() => dispatch({ type: 'RESET_GAME' }), []),
     setFloor: useCallback((floor) => dispatch({ type: 'SET_FLOOR', floor }), []),
     loadExternalState,
-    buyTicket: useCallback((cost) => dispatch({ type: 'BUY_TICKET', cost }), []),
+    pause: useCallback(() => dispatch({ type: 'PAUSE' }), []),
+    resume: useCallback(() => dispatch({ type: 'RESUME' }), []),
+    buyTicket: useCallback((cost, machineId) => dispatch({ type: 'BUY_TICKET', cost, machineId }), []),
     rollCollectible: useCallback((c) => dispatch({ type: 'ROLL_COLLECTIBLE', collectible: c }), []),
+    newRun: useCallback(() => dispatch({ type: 'NEW_RUN' }), []),
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

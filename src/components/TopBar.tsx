@@ -5,9 +5,10 @@ interface TopBarProps {
   onLogout: () => void;
   username: string | null;
   isDev: boolean;
+  onPause?: () => void;
 }
 
-export function TopBar({ onLogout, username, isDev }: TopBarProps) {
+export function TopBar({ onLogout, username, isDev, onPause }: TopBarProps) {
   const { state } = useGame();
   const floorLabel = ['', 'LOBBY', 'MEZZANINE', 'HIGH STAKES', 'PENTHOUSE', 'LEGEND'][state.floor];
 
@@ -26,6 +27,11 @@ export function TopBar({ onLogout, username, isDev }: TopBarProps) {
       </div>
       <div className="topbar-user">
         <span className="topbar-username mono">{username}</span>
+        {onPause && (
+          <button className="topbar-pause" onClick={onPause} title="Pause game">
+            ⏸
+          </button>
+        )}
         <button className="topbar-logout" onClick={onLogout}>LOGOUT</button>
       </div>
     </header>

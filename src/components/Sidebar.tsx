@@ -2,57 +2,40 @@ import React, { useState } from 'react';
 import { useGame } from '../store/gameStore';
 import { formatMoney, formatTime } from '../utils/gameLogic';
 import { supabase } from '../lib/supabase';
-import { rollCollectible as rollCollectibleDef, rarityColor, TICKET_COST } from '../games/collectibles';
+import { rarityColor, RARITY_ORDER } from '../games/collectibles';
 import { Collectible } from '../types';
+import { Leaderboard } from './Leaderboard';
 
 const FLOOR_LABELS: Record<number, string> = {
-  1: 'LOBBY',
-  2: 'MEZZ',
-  3: 'HIGH',
-  4: 'PENT',
-  5: 'LEGEND',
+  1: 'LOBBY', 2: 'MEZZ', 3: 'HIGH', 4: 'PENT', 5: 'LEGEND',
 };
 
 export function Sidebar() {
-  const { state, endDayManual, isDev, setFloor, buyTicket, rollCollectible } = useGame();
+  const { state, endDayManual, ascend, isDev, setFloor } = useGame();
   const [sendTarget, setSendTarget] = useState('');
   const [sendAmount, setSendAmount] = useState('1000000');
   const [sendMsg, setSendMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [collectiblesOpen, setCollectiblesOpen] = useState(false);
-  const [vendResult, setVendResult] = useState<Collectible | null>(null);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const progress = Math.min(1, state.bank / state.quota);
   const timerUrgent = state.timeLeft <= 60;
   const quotaHit = state.bank >= state.quota;
-  const tickets = state.tickets ?? 0;
+  const isLastDay = state.day >= 15;
   const collectibles = state.collectibles ?? [];
-  const canBuyTicket = isDev || state.bank >= TICKET_COST;
 
   const sendMoney = async () => {
     const target = sendTarget.trim().toLowerCase();
     const amount = parseInt(sendAmount, 10);
     if (!target || isNaN(amount) || amount <= 0) return;
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('username, game_state')
-      .eq('username', target)
-      .maybeSingle();
-
-    if (error || !data) {
-      setSendMsg({ ok: false, text: 'User not found.' });
-      return;
-    }
+    const { data, error } = await supabase.from('users').select('username, game_state').eq('username', target).maybeSingle();
+    if (error || !data) { setSendMsg({ ok: false, text: 'User not found.' }); return; }
 
     const gs = (data.game_state ?? {}) as Record<string, unknown>;
     const current = typeof gs.bank === 'number' ? gs.bank : 0;
     const updated = { ...gs, bank: current + amount };
 
-    const { error: updateErr } = await supabase
-      .from('users')
-      .update({ game_state: updated })
-      .eq('username', target);
-
+    const { error: updateErr } = await supabase.from('users').update({ game_state: updated }).eq('username', target);
     if (updateErr) {
       setSendMsg({ ok: false, text: 'Failed to send.' });
     } else {
@@ -62,100 +45,68 @@ export function Sidebar() {
     setTimeout(() => setSendMsg(null), 3000);
   };
 
-  const handleBuyTicket = () => {
-    buyTicket(TICKET_COST);
-  };
-
-  const handleVend = () => {
-    if (tickets <= 0) return;
-    const def = rollCollectibleDef();
-    const c: Collectible = { ...def, obtainedAt: Date.now() };
-    rollCollectible(c);
-    setVendResult(c);
-    setTimeout(() => setVendResult(null), 3000);
-  };
-
   return (
     <aside className="sidebar">
       {/* Bank */}
       <div className="sidebar-section">
         <div className="sidebar-label">BANK</div>
         <div className="sidebar-bank">{formatMoney(state.bank)}</div>
+        {state.incomeMultiplier && state.incomeMultiplier > 1 && (
+          <div className="sidebar-multiplier">+{((state.incomeMultiplier - 1) * 100).toFixed(0)}% income</div>
+        )}
       </div>
 
-      {/* Quota */}
+      {/* Quota / Last day */}
       <div className="sidebar-section">
-        <div className="sidebar-label">DAILY QUOTA</div>
-        <div className={`sidebar-quota ${quotaHit ? 'quota-hit' : ''}`}>
-          {formatMoney(state.quota)}
+        <div className="sidebar-label">
+          {isLastDay ? 'ASCENSION READY' : 'DAILY QUOTA'}
         </div>
-        <div className="quota-bar-wrap">
-          <div
-            className={`quota-bar-fill ${quotaHit ? 'quota-bar-done' : ''}`}
-            style={{ width: `${progress * 100}%` }}
-          />
-        </div>
-        <div className="quota-pct">
-          {quotaHit ? '✓ QUOTA HIT' : `${Math.round(progress * 100)}% to quota`}
-        </div>
+        {!isLastDay && (
+          <>
+            <div className={`sidebar-quota ${quotaHit ? 'quota-hit' : ''}`}>
+              {formatMoney(state.quota)}
+            </div>
+            <div className="quota-bar-wrap">
+              <div className={`quota-bar-fill ${quotaHit ? 'quota-bar-done' : ''}`} style={{ width: `${progress * 100}%` }} />
+            </div>
+            <div className="quota-pct">
+              {quotaHit ? '✓ QUOTA HIT' : `${Math.round(progress * 100)}% to quota`}
+            </div>
+          </>
+        )}
+        {isLastDay && (
+          <div className="last-day-badge">🏆 FINAL FLOOR — INFINITE TIME</div>
+        )}
       </div>
 
       {/* Timer */}
-      <div className="sidebar-section">
-        <div className="sidebar-label">TIME LEFT</div>
-        <div className={`sidebar-timer ${timerUrgent ? 'timer-urgent' : ''}`}>
-          {formatTime(state.timeLeft)}
+      {!isLastDay && (
+        <div className="sidebar-section">
+          <div className="sidebar-label">TIME LEFT</div>
+          <div className={`sidebar-timer ${timerUrgent ? 'timer-urgent' : ''}`}>
+            {formatTime(state.timeLeft)}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Tickets */}
+      {/* Collectibles */}
       <div className="sidebar-section">
-        <div className="sidebar-label">🎟 TICKETS</div>
-        <div className="tickets-row">
-          <span className="tickets-count">{tickets}</span>
-          <button
-            className="ticket-buy-btn"
-            onClick={handleBuyTicket}
-            disabled={!canBuyTicket}
-            title={`Buy 1 ticket for ${formatMoney(TICKET_COST)}`}
-          >
-            +1 for {formatMoney(TICKET_COST)}
-          </button>
-        </div>
-        {/* Vending machine */}
-        <div className="vending-wrap">
-          <button
-            className={`vending-btn ${tickets <= 0 ? 'vending-disabled' : ''}`}
-            onClick={handleVend}
-            disabled={tickets <= 0}
-          >
-            🎰 VEND COLLECTIBLE
-          </button>
-          {vendResult && (
-            <div className="vend-result" style={{ color: rarityColor(vendResult.rarity) }}>
-              {vendResult.emoji} {vendResult.name}
-              <span className="vend-rarity"> [{vendResult.rarity.toUpperCase()}]</span>
-            </div>
-          )}
-        </div>
-        {/* Collectibles toggle */}
-        <button className="collectibles-toggle" onClick={() => setCollectiblesOpen(v => !v)}>
-          {collectiblesOpen ? '▲' : '▼'} COLLECTION ({collectibles.length})
-        </button>
-        {collectiblesOpen && (
-          <div className="collectibles-list">
-            {collectibles.length === 0 ? (
-              <div className="collectibles-empty">No collectibles yet.</div>
-            ) : (
-              [...collectibles].reverse().map((c, i) => (
-                <div key={i} className="collectible-row" style={{ borderColor: rarityColor(c.rarity) }}>
-                  <span className="collectible-emoji">{c.emoji}</span>
-                  <span className="collectible-name" style={{ color: rarityColor(c.rarity) }}>{c.name}</span>
+        <div className="sidebar-label">🎴 COLLECTIBLES ({collectibles.length})</div>
+        <div className="collectibles-grid">
+          {collectibles.length === 0 ? (
+            <div className="collectibles-empty">None yet</div>
+          ) : (
+            [...collectibles]
+              .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
+              .slice(0, 8)
+              .map((c, i) => (
+                <div key={i} className="collectible-card" style={{ borderColor: rarityColor(c.rarity) }} title={c.name}>
+                  <span className="cc-emoji">{c.emoji}</span>
+                  <span className="cc-rarity">{c.rarity[0].toUpperCase()}</span>
                 </div>
               ))
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* History */}
@@ -177,6 +128,11 @@ export function Sidebar() {
           </div>
         </div>
       )}
+
+      {/* Leaderboard button */}
+      <button className="sidebar-leaderboard-btn" onClick={() => setShowLeaderboard(true)}>
+        🏆 LEADERBOARD
+      </button>
 
       {isDev && (
         <div className="sidebar-section">
@@ -222,9 +178,19 @@ export function Sidebar() {
         </div>
       )}
 
-      <button className="btn-end-day" onClick={endDayManual} disabled={!quotaHit && !isDev}>
-        {isDev ? 'NEXT FLOOR ↑' : quotaHit ? 'ENTER LIMO' : '🔒 QUOTA NOT MET'}
-      </button>
+      {!isLastDay && (
+        <button className="btn-end-day" onClick={endDayManual} disabled={!quotaHit && !isDev}>
+          {isDev ? 'NEXT FLOOR ↑' : quotaHit ? 'ENTER LIMO' : '🔒 QUOTA NOT MET'}
+        </button>
+      )}
+
+      {isLastDay && (
+        <button className="btn-end-day btn-ascend" onClick={ascend}>
+          🔥 ASCEND (×{(Math.pow(1.2, (state.winCount ?? 0) + 1)).toFixed(2)} income)
+        </button>
+      )}
+
+      {showLeaderboard && <Leaderboard onClose={() => setShowLeaderboard(false)} />}
     </aside>
   );
 }
