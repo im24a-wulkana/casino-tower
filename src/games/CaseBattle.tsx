@@ -42,10 +42,11 @@ function PlayerCard({
         {player.type === 'bot' ? '🤖' : '👤'} {player.name}
       </div>
       {caseIds.map((cId, ci) => {
-        const caseDef = CASES.find(c => c.id === cId)!;
+        const caseDef = CASES.find(c => c.id === cId);
+        if (!caseDef) return null;
         const item: CaseItem | undefined = player.items[ci];
         return (
-          <div key={ci} className="cb-arena-case" style={{ borderTopColor: caseDef?.color }}>
+          <div key={ci} className="cb-arena-case" style={{ borderTopColor: caseDef.color }}>
             {phase === 'waiting' && (
               <div className="cb-waiting"><span>{caseDef?.emoji}</span></div>
             )}

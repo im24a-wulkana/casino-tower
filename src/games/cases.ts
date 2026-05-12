@@ -318,6 +318,18 @@ export const CASES: CaseDef[] = [
     ]),
   },
   {
+    id: 'jackpot',
+    name: 'JACKPOT CASE',
+    price: 1_000_000_000,
+    emoji: '💰',
+    color: '#ffd700',
+    risk: 'high',
+    items: w([
+      { emoji: '🪙', name: 'Dud',          value: 1,              weight: 90 },
+      { emoji: '💎', name: 'JACKPOT',      value: 10_000_000_000, weight: 10 },
+    ]),
+  },
+  {
     id: 'divine',
     name: 'DIVINE CASE',
     price: 100_000_000_000,
@@ -329,18 +341,6 @@ export const CASES: CaseDef[] = [
       { emoji: '🙏', name: 'Prayer',       value: 55_263_157_900,   weight: 30 },
       { emoji: '😇', name: 'Blessed',      value: 147_368_421_100,  weight: 15 },
       { emoji: '👑', name: 'God Crown',    value: 442_105_263_200,  weight: 5  },
-    ]),
-  },
-  {
-    id: 'jackpot',
-    name: 'JACKPOT CASE',
-    price: 1_000_000_000,
-    emoji: '💰',
-    color: '#ffd700',
-    risk: 'high',
-    items: w([
-      { emoji: '🪙', name: 'Dud',          value: 1,              weight: 90 },
-      { emoji: '💎', name: 'JACKPOT',      value: 10_000_000_000, weight: 10 },
     ]),
   },
 ];
