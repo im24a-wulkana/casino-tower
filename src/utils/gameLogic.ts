@@ -5,8 +5,11 @@ const FLOOR_GAMES: Record<number, string[]> = {
   1: ['blackjack', 'roulette', 'slots', 'street-craps', 'wheel-of-fortune', 'duck-race'],
   2: ['penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel'],
   3: ['dragon-tower', 'mine-sweeper', 'baccarat', 'poker'],
-  4: ['case-opening', 'case-battle', 'dragon-tower', 'mine-sweeper', 'baccarat', 'poker', 'plinko', 'hilo'],
+  4: ['dragon-tower', 'mine-sweeper', 'baccarat', 'poker', 'plinko', 'hilo'],
 };
+
+// Floor 4 always includes both case games, plus 2 random from the pool
+const FLOOR4_FIXED = ['case-opening', 'case-battle'];
 
 export function getFloorForDay(day: number): number {
   if (day <= 3) return 1;
@@ -22,7 +25,10 @@ export function getAvailableGames(floor: number, seed: number): string[] {
     const j = Math.floor(rng() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  // Always show 4 games (or all if pool < 4)
+  if (floor === 4) {
+    // Always show case-opening and case-battle, plus 2 random from the pool
+    return [...FLOOR4_FIXED, ...pool.slice(0, 2)];
+  }
   return pool.slice(0, Math.min(4, pool.length));
 }
 

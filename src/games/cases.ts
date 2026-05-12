@@ -169,6 +169,17 @@ export const CASES: CaseDef[] = [
       { emoji: '🔴', name: 'THE OMEGA',    value: 2_200_000,weight: 13 },
     ]),
   },
+  {
+    id: 'abyss',
+    name: 'ABYSS CASE',
+    price: 10_000_000,
+    emoji: '🕳️',
+    color: '#6600ff',
+    items: w([
+      { emoji: '🪨', name: 'Nothing',      value: 1,           weight: 99 },
+      { emoji: '👁️', name: 'THE ABYSS',    value: 950_000_000, weight: 1  },
+    ]),
+  },
 ];
 
 export function rollItem(caseDef: CaseDef): CaseItem {

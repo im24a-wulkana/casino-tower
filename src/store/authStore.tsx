@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { GameState } from '../types';
 import { supabase } from '../lib/supabase';
 
@@ -14,6 +14,7 @@ export interface AuthContextValue {
   logout: () => void;
   saveGameState: (state: GameState) => void;
   loadGameState: () => GameState | null;
+  onDBUpdate: (cb: (state: GameState) => void) => () => void;
 }
 
 // Kept for local game-state caching (not auth)
@@ -58,6 +59,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const isDev = username === DEV_USERNAME;
+  const dbUpdateListeners = useRef<Set<(state: GameState) => void>>(new Set());
+
+  // Subscribe to Realtime updates for the logged-in user's row
+  useEffect(() => {
+    if (!username || username === DEV_USERNAME) return;
+    const channel = supabase
+      .channel(`user:${username}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'users', filter: `username=eq.${username}` },
+        payload => {
+          const gs = (payload.new as Record<string, unknown>).game_state as GameState | null;
+          if (!gs) return;
+          setCachedGameState(username, gs);
+          setLoadedState(gs);
+          dbUpdateListeners.current.forEach(cb => cb(gs));
+        },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [username]);
+
+  const onDBUpdate = useCallback((cb: (state: GameState) => void) => {
+    dbUpdateListeners.current.add(cb);
+    return () => { dbUpdateListeners.current.delete(cb); };
+  }, []);
 
   const login = useCallback(async (user: string, pass: string): Promise<string | null> => {
     const key = user.toLowerCase().trim();
@@ -136,7 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [loadedState]);
 
   return (
-    <AuthContext.Provider value={{ username, isDev, login, register, logout, saveGameState, loadGameState }}>
+    <AuthContext.Provider value={{ username, isDev, login, register, logout, saveGameState, loadGameState, onDBUpdate }}>
       {children}
     </AuthContext.Provider>
   );

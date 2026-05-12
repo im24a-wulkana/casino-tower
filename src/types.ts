@@ -40,4 +40,5 @@ export type GameAction =
   | { type: 'END_DAY_MANUAL' }
   | { type: 'START_NEXT_DAY' }
   | { type: 'RESET_GAME' }
-  | { type: 'SET_FLOOR'; floor: number };
+  | { type: 'SET_FLOOR'; floor: number }
+  | { type: 'LOAD_STATE'; state: GameState };

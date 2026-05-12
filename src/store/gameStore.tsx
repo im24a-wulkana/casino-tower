@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { GameState, GameAction } from '../types';
 import {
   createInitialState,
@@ -107,6 +107,9 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
     case 'RESET_GAME':
       return createInitialState();
 
+    case 'LOAD_STATE':
+      return { ...action.state };
+
     case 'SET_FLOOR': {
       const floor = Math.max(1, Math.min(4, action.floor));
       const FLOOR_GAMES: Record<number, string[]> = {
@@ -138,6 +141,7 @@ interface GameContextValue {
   startNextDay: () => void;
   resetGame: () => void;
   setFloor: (floor: number) => void;
+  loadExternalState: (s: GameState) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -147,9 +151,10 @@ interface GameProviderProps {
   isDev: boolean;
   initialState?: GameState | null;
   onStateChange?: (state: GameState) => void;
+  onDBUpdateRef?: React.MutableRefObject<((s: GameState) => void) | null>;
 }
 
-export function GameProvider({ children, isDev, initialState, onStateChange }: GameProviderProps) {
+export function GameProvider({ children, isDev, initialState, onStateChange, onDBUpdateRef }: GameProviderProps) {
   const startState = isDev
     ? makeDevState()
     : (initialState ?? createInitialState());
@@ -172,6 +177,16 @@ export function GameProvider({ children, isDev, initialState, onStateChange }: G
     return () => clearInterval(id);
   }, [state.phase, isDev]);
 
+  const loadExternalState = useCallback((s: GameState) => {
+    dispatch({ type: 'LOAD_STATE', state: s });
+  }, []);
+
+  // Expose loadExternalState through the ref so parent can call it
+  useEffect(() => {
+    if (onDBUpdateRef) onDBUpdateRef.current = loadExternalState;
+    return () => { if (onDBUpdateRef) onDBUpdateRef.current = null; };
+  }, [loadExternalState, onDBUpdateRef]);
+
   const value: GameContextValue = {
     state,
     isDev,
@@ -182,6 +197,7 @@ export function GameProvider({ children, isDev, initialState, onStateChange }: G
     startNextDay: useCallback(() => dispatch({ type: 'START_NEXT_DAY' }), []),
     resetGame: useCallback(() => dispatch({ type: 'RESET_GAME' }), []),
     setFloor: useCallback((floor) => dispatch({ type: 'SET_FLOOR', floor }), []),
+    loadExternalState,
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

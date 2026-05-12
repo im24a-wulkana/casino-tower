@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './store/authStore';
 import { GameProvider, useGame } from './store/gameStore';
 import { AuthScreen } from './components/AuthScreen';
@@ -76,7 +76,16 @@ function Casino() {
 }
 
 function AuthedApp() {
-  const { username, isDev, saveGameState, loadGameState } = useAuth();
+  const { username, isDev, saveGameState, loadGameState, onDBUpdate } = useAuth();
+  const dbUpdateRef = useRef<((s: import('./types').GameState) => void) | null>(null);
+
+  useEffect(() => {
+    if (!username || isDev) return;
+    const unsub = onDBUpdate((newState) => {
+      dbUpdateRef.current?.(newState);
+    });
+    return unsub;
+  }, [username, isDev, onDBUpdate]);
 
   if (!username) return <AuthScreen />;
 
@@ -85,6 +94,7 @@ function AuthedApp() {
       isDev={isDev}
       initialState={loadGameState()}
       onStateChange={saveGameState}
+      onDBUpdateRef={dbUpdateRef}
     >
       <Casino />
     </GameProvider>
