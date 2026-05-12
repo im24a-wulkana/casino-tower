@@ -3,13 +3,14 @@ import { useGame } from '../store/gameStore';
 import { formatMoney } from '../utils/gameLogic';
 import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from '../components/BettingPanel';
 
-// 1×(×12), 2×(×6), 5×(×3), 10×(×1), SKULL(×2 = lose)
+// 24 segments — EV = (6+6+6+5)/24 = 23/24 ≈ 95.8% RTP
+// 0.5×(×12), 1×(×6), 2×(×3), 5×(×1), SKULL(×2 = lose)
 const SEGMENTS = [
-  ...Array(12).fill(null).map(() => ({ label: '1×',  mult: 1,  color: '#1a2a1a' })),
-  ...Array(6).fill(null).map(()  => ({ label: '2×',  mult: 2,  color: '#1a2a4a' })),
-  ...Array(3).fill(null).map(()  => ({ label: '5×',  mult: 5,  color: '#3a2a1a' })),
-  ...Array(1).fill(null).map(()  => ({ label: '10×', mult: 10, color: '#3a1a4a' })),
-  ...Array(2).fill(null).map(()  => ({ label: '💀',  mult: 0,  color: '#3a0a0a' })),
+  ...Array(12).fill(null).map(() => ({ label: '0.5×', mult: 0.5, color: '#1a2a1a' })),
+  ...Array(6).fill(null).map(()  => ({ label: '1×',   mult: 1,   color: '#1a2a4a' })),
+  ...Array(3).fill(null).map(()  => ({ label: '2×',   mult: 2,   color: '#3a2a1a' })),
+  ...Array(1).fill(null).map(()  => ({ label: '5×',   mult: 5,   color: '#3a1a4a' })),
+  ...Array(2).fill(null).map(()  => ({ label: '💀',   mult: 0,   color: '#3a0a0a' })),
 ];
 
 const N = SEGMENTS.length; // 24
@@ -184,7 +185,7 @@ export function MoneyWheel() {
 
 
       <div className="wof-paytable">
-        <span>1× ×12</span><span>2× ×6</span><span>5× ×3</span><span>10× ×1</span>
+        <span>0.5× ×12</span><span>1× ×6</span><span>2× ×3</span><span>5× ×1</span>
         <span className="loss">💀 ×2</span>
       </div>
 
