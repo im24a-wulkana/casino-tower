@@ -6,24 +6,26 @@ import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from
 const ROWS = 8;
 const SLOTS = ROWS + 1; // 9
 
+// Multipliers tuned to ~95% RTP using binomial B(8,0.5) slot probabilities
+// P(slot i) = C(8,i)/256: [1,8,28,56,70,56,28,8,1]/256
 const RISK_CONFIG = {
   LOW: {
     label: 'LOW',
-    mults:  [3, 2, 1.5, 1, 0.5, 1, 1.5, 2, 3],
-    colors: ['#c9a84c','#2dc653','#3a9a3a','#3a7a3a','#3a6b3a','#3a7a3a','#3a9a3a','#2dc653','#c9a84c'],
+    mults:  [2.5, 1.8, 1.3, 0.9, 0.5, 0.9, 1.3, 1.8, 2.5],
+    colors: ['#c9a84c','#2dc653','#3a9a3a','#4caaff','#888','#4caaff','#3a9a3a','#2dc653','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.0,
   },
   MEDIUM: {
     label: 'MEDIUM',
-    mults:  [5, 2, 1, 0.5, 0, 0.5, 1, 2, 5],
+    mults:  [20, 4, 1.5, 0.5, 0, 0.5, 1.5, 4, 20],
     colors: ['#c9a84c','#4caaff','#888','#b44c00','#7a1a1a','#b44c00','#888','#4caaff','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.0,
   },
   HIGH: {
     label: 'HIGH',
-    mults:  [24, 0.5, 0, 0, 0, 0, 0, 0.5, 24],
+    mults:  [115, 2, 0, 0, 0, 0, 0, 2, 115],
     colors: ['#c9a84c','#8a3a00','#4a0000','#4a0000','#4a0000','#4a0000','#4a0000','#8a3a00','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.4,
@@ -285,7 +287,9 @@ export function Plinko() {
       ctx.font = 'bold 11px JetBrains Mono, monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillStyle = flashingBall ? '#000' : '#e8e8e8';
+      // Use dark text on light slot colors so it's always readable
+      const lightSlot = color === '#4caaff' || color === '#2dc653' || color === '#c9a84c';
+      ctx.fillStyle = flashingBall ? '#000' : (lightSlot ? '#111' : '#e8e8e8');
       ctx.fillText(multLabel(mult), sx + slotW / 2, slotTop + SLOT_H / 2);
     }
 
