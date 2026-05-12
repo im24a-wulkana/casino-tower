@@ -22,7 +22,7 @@ function makeDevState(): GameState {
     floor: 5,
     quota: 0,
     tickets: 999,
-    availableGames: [...ALL_GAMES, 'ticket-shop'],
+    availableGames: [...ALL_GAMES],
   };
 }
 
