@@ -21,15 +21,17 @@ export function CaseOpening() {
 
   const canAfford = (c: CaseDef) => gs.bank >= c.price;
 
+  const STOP_IDX = REEL_ITEMS - 6; // reel stops here, winner placed at this index
+
   const openCase = (c: CaseDef) => {
     if (gs.bank < c.price) return;
     updateBank(-c.price);
     setSelectedCase(c);
 
-    // Build reel: random items, last one is the real result
+    // Build reel: random items, winner placed exactly at STOP_IDX
     const result = rollItem(c);
     const reel: CaseItem[] = Array.from({ length: REEL_ITEMS }, (_, i) =>
-      i === REEL_ITEMS - 1 ? result : rollItem(c)
+      i === STOP_IDX ? result : rollItem(c)
     );
     setReelItems(reel);
     setReelOffset(0);
@@ -43,9 +45,11 @@ export function CaseOpening() {
     const el = reelRef.current;
     if (!el) return;
 
-    // Start position: reel at 0, then animate to land on second-to-last item (center)
-    const targetIdx = REEL_ITEMS - 6; // stop near end
-    const targetOffset = targetIdx * ITEM_W - (el.parentElement!.offsetWidth / 2 - ITEM_W / 2);
+    const containerW = el.parentElement!.offsetWidth;
+    const centerOffset = containerW / 2 - ITEM_W / 2;
+    // Sub-item random jitter so reel doesn't always stop dead-center
+    const jitter = (Math.random() - 0.5) * (ITEM_W * 0.6);
+    const targetOffset = STOP_IDX * ITEM_W - centerOffset + jitter;
 
     el.style.transition = 'none';
     el.style.transform = 'translateX(0)';
@@ -58,7 +62,7 @@ export function CaseOpening() {
     });
 
     const timeout = setTimeout(() => {
-      const won = reelItems[targetIdx];
+      const won = reelItems[STOP_IDX];
       setWonItem(won);
       updateBank(won.value);
       const net = won.value - selectedCase!.price;

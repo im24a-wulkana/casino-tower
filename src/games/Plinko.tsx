@@ -28,7 +28,7 @@ const RISK_CONFIG = {
     mults:  [105, 2, 0, 0, 0, 0, 0, 2, 105],
     colors: ['#c9a84c','#8a3a00','#4a0000','#4a0000','#4a0000','#4a0000','#4a0000','#8a3a00','#c9a84c'],
     bias: 0,
-    edgeHitRadius: 1.4,
+    edgeHitRadius: 1.0, // was 1.4 — center bias broke binomial distribution making true RTP far below 94.5%
   },
 } as const;
 

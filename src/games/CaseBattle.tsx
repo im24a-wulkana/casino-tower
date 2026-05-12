@@ -193,47 +193,50 @@ export function CaseBattle() {
     setActiveBattle(updated);
   };
 
-  // ── Start battle (host only) — rolls all items and saves final state
+  // ── Start battle (host only) — reveals one case at a time across all players simultaneously
   const startBattle = useCallback(async () => {
     if (!activeBattle) return;
     if (!activeBattle.players.every(p => p.type !== 'empty')) return;
 
-    // Mark as running first so all clients see the live state
+    const numCases = activeBattle.caseIds.length;
+    const numPlayers = activeBattle.players.length;
+
+    // Roll all items upfront
+    const allItems: CaseItem[][] = activeBattle.players.map(() =>
+      activeBattle.caseIds.map(cId => rollItem(CASES.find(c => c.id === cId)!))
+    );
+
+    // Mark running
     const running: LobbyBattle = { ...activeBattle, status: 'running' };
     await saveBattle(running);
     setActiveBattle(running);
 
-    // Stagger reveals per player then save final resolved state
-    const numPlayers = activeBattle.players.length;
-    const allItems = activeBattle.players.map(() =>
-      activeBattle.caseIds.map(cId => rollItem(CASES.find(c => c.id === cId)!))
-    );
-
-    // Reveal each player's items one by one with a delay
-    for (let idx = 0; idx < numPlayers; idx++) {
-      await new Promise(res => setTimeout(res, 600 + idx * 700 + Math.random() * 300));
-      const current = await getBattle(activeBattle.id);
-      if (!current) return;
+    // Reveal one case slot at a time for all players simultaneously
+    let current: LobbyBattle = running;
+    for (let ci = 0; ci < numCases; ci++) {
+      await new Promise(res => setTimeout(res, 1200));
+      const fresh = await getBattle(activeBattle.id) ?? current;
       const next: LobbyBattle = {
-        ...current,
-        players: current.players.map((p, i) =>
-          i === idx ? { ...p, items: allItems[i], done: true } : p
-        ),
+        ...fresh,
+        players: fresh.players.map((p, pi) => ({
+          ...p,
+          items: allItems[pi].slice(0, ci + 1),
+          done: ci === numCases - 1,
+        })),
       };
       await saveBattle(next);
       setActiveBattle(next);
+      current = next;
     }
 
     // Resolve
-    const final = await getBattle(activeBattle.id);
-    if (!final) return;
-    const { teams } = modeConfig(final.mode);
+    const { teams } = modeConfig(current.mode);
     const totals = Array(teams).fill(0);
-    final.players.forEach(p => { totals[p.teamIdx] += p.items.reduce((s, i) => s + i.value, 0); });
-    const isCrazyMode = final.mode === 'crazy';
+    current.players.forEach(p => { totals[p.teamIdx] += p.items.reduce((s, i) => s + i.value, 0); });
+    const isCrazyMode = current.mode === 'crazy';
     const best = isCrazyMode ? Math.min(...totals) : Math.max(...totals);
     const winners = totals.map((t, i) => t === best ? i : -1).filter(i => i >= 0);
-    const resolved: LobbyBattle = { ...final, status: 'done', teamTotals: totals, winningTeams: winners };
+    const resolved: LobbyBattle = { ...current, status: 'done', teamTotals: totals, winningTeams: winners };
     await saveBattle(resolved);
     setActiveBattle(resolved);
   }, [activeBattle]);

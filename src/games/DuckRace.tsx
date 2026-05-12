@@ -5,11 +5,11 @@ import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from
 
 // 5 ducks, equal 1/5 chance each — 4.75× gives 95% RTP
 const DUCKS = [
-  { id: 0, name: 'Duck 1',  emoji: '🐥', mult: 4.75 },
-  { id: 1, name: 'Duck 2',  emoji: '🐤', mult: 4.75 },
-  { id: 2, name: 'Duck 3',  emoji: '🦆', mult: 4.75 },
-  { id: 3, name: 'Duck 4',  emoji: '🐣', mult: 4.75 },
-  { id: 4, name: 'YARL',    emoji: '🦅', mult: 4.75 },
+  { id: 0, name: 'QUACKERS', emoji: '🐥', mult: 4.75 },
+  { id: 1, name: 'SUNNY',    emoji: '🐤', mult: 4.75 },
+  { id: 2, name: 'WADDLES',  emoji: '🦆', mult: 4.75 },
+  { id: 3, name: 'PIPSQUEAK',emoji: '🐣', mult: 4.75 },
+  { id: 4, name: 'YARL',     emoji: '🦅', mult: 4.75 },
 ];
 
 type Phase = 'betting' | 'racing' | 'result';
