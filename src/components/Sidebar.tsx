@@ -16,6 +16,7 @@ export function Sidebar() {
   const [sendAmount, setSendAmount] = useState('1000000');
   const [sendMsg, setSendMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
 
   const progress = Math.min(1, state.bank / state.quota);
   const timerUrgent = state.timeLeft <= 60;
@@ -96,15 +97,22 @@ export function Sidebar() {
           {collectibles.length === 0 ? (
             <div className="collectibles-empty">None yet</div>
           ) : (
-            [...collectibles]
-              .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
-              .slice(0, 8)
-              .map((c, i) => (
-                <div key={i} className="collectible-card" style={{ borderColor: rarityColor(c.rarity) }} title={c.name}>
-                  <span className="cc-emoji">{c.emoji}</span>
-                  <span className="cc-rarity">{c.rarity[0].toUpperCase()}</span>
-                </div>
-              ))
+            <>
+              {[...collectibles]
+                .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
+                .slice(0, 3)
+                .map((c, i) => (
+                  <div key={i} className="collectible-card" style={{ borderColor: rarityColor(c.rarity) }} title={c.name}>
+                    <span className="cc-emoji">{c.emoji}</span>
+                    <span className="cc-rarity">{c.rarity[0].toUpperCase()}</span>
+                  </div>
+                ))}
+              {collectibles.length > 3 && (
+                <button className="collectible-view-all" onClick={() => setShowCollectionModal(true)}>
+                  +{collectibles.length - 3}<br/>More
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -191,6 +199,31 @@ export function Sidebar() {
       )}
 
       {showLeaderboard && <Leaderboard onClose={() => setShowLeaderboard(false)} />}
+
+      {/* Collection Modal */}
+      {showCollectionModal && (
+        <div className="collection-modal-backdrop" onClick={() => setShowCollectionModal(false)}>
+          <div className="collection-modal" onClick={e => e.stopPropagation()}>
+            <div className="collection-modal-header">
+              <span className="collection-modal-title">YOUR COLLECTION</span>
+              <button className="collection-modal-close" onClick={() => setShowCollectionModal(false)}>✕</button>
+            </div>
+            <div className="collection-modal-content">
+              {[...collectibles]
+                .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
+                .map((c, i) => (
+                  <div key={i} className="collection-card" style={{ borderColor: rarityColor(c.rarity) }}>
+                    <span className="cc-emoji">{c.emoji}</span>
+                    <span className="cc-name">{c.name}</span>
+                    <span className="cc-rarity" style={{ color: rarityColor(c.rarity) }}>
+                      {c.rarity.toUpperCase()}
+                    </span>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
     </aside>
   );
 }

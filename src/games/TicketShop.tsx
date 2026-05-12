@@ -77,12 +77,14 @@ export function TicketShop() {
 
   // Animate each reel independently
   useEffect(() => {
+    const timeoutIds: NodeJS.Timeout[] = [];
+
     spinningMachines.forEach(machineId => {
       const el = reelRefs.current[machineId];
       if (!el || !reels[machineId]) return;
 
       const idx = stopIndices[machineId];
-      const itemHeight = 80;
+      const itemHeight = 110;
       const targetOffset = idx * itemHeight;
 
       el.style.transition = 'none';
@@ -103,16 +105,20 @@ export function TicketShop() {
         setSpinningMachines(prev => {
           const next = new Set(prev);
           next.delete(machineId);
+          if (next.size === 0) {
+            setPhase('result');
+          }
           return next;
         });
-        if (spinningMachines.size === 1) {
-          setPhase('result');
-        }
       }, 2600);
 
-      return () => clearTimeout(timeoutId);
+      timeoutIds.push(timeoutId);
     });
-  }, [phase, spinningMachines, reels, stopIndices]);
+
+    return () => {
+      timeoutIds.forEach(id => clearTimeout(id));
+    };
+  }, [spinningMachines, reels, stopIndices, rollCollectible]);
 
   const reset = () => {
     setPhase('idle');
