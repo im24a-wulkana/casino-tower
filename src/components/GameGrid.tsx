@@ -14,7 +14,7 @@ const IMPLEMENTED = new Set([
   'blackjack','roulette','slots','street-craps','wheel-of-fortune','duck-race',
   'penguin-cross','keno','crash','hilo','plinko','money-wheel',
   'dragon-tower','mine-sweeper','baccarat','poker',
-  'case-opening','case-battle',
+  'case-opening','case-battle','ticket-shop',
 ]);
 
 export function GameGrid() {
