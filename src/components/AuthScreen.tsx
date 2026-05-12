@@ -7,13 +7,16 @@ export function AuthScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setLoading(true);
     const err = mode === 'login'
-      ? login(username.trim(), password)
-      : register(username.trim(), password);
+      ? await login(username.trim(), password)
+      : await register(username.trim(), password);
+    setLoading(false);
     if (err) setError(err);
   };
 
@@ -65,8 +68,8 @@ export function AuthScreen() {
             />
           </div>
           {error && <div className="auth-error">{error}</div>}
-          <button className="btn-primary auth-submit" type="submit">
-            {mode === 'login' ? 'ENTER THE TOWER' : 'CREATE ACCOUNT'}
+          <button className="btn-primary auth-submit" type="submit" disabled={loading}>
+            {loading ? 'LOADING…' : mode === 'login' ? 'ENTER THE TOWER' : 'CREATE ACCOUNT'}
           </button>
         </form>
 
