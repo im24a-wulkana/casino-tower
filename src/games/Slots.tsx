@@ -17,10 +17,11 @@ const POOL = ['★','★','★','★','★','★','♣','♣','♣','♣','♣',
 
 function roll(): string { return POOL[Math.floor(Math.random() * POOL.length)]; }
 
+// 3×7=10x, 3×other=5x, 2-match=1.2x -> EV≈95.1%
 function calcResult(reels: string[], bet: number): { label: string; mult: number } {
   const [a, b, c] = reels;
   if (a === b && b === c) {
-    const mult = a === '7' ? 20 : 10;
+    const mult = a === '7' ? 10 : 5;
     return { label: `3 × ${a}`, mult };
   }
   if (a === b || b === c || a === c) return { label: '2 of a Kind', mult: 1.2 };
@@ -76,8 +77,8 @@ export function Slots() {
           ))}
         </div>
         <div className="slots-paytable">
-          <span>3×7 = 20x</span>
-          <span>3 match = 10x</span>
+          <span>3×7 = 10x</span>
+          <span>3 match = 5x</span>
           <span>2 match = 1.2x</span>
         </div>
       </div>

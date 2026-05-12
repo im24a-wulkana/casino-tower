@@ -5,7 +5,7 @@ import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from
 
 const ROWS = 5;
 const COLS = 3;
-const MULT_PER_ROW = 1.5;
+const MULT_PER_ROW = 1.49; // (2/3 * 1.49)^5 ≈ 96.7% RTP
 
 interface EggCell { bomb: boolean; picked: boolean; revealed: boolean; }
 type Board = EggCell[][];

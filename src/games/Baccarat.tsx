@@ -84,7 +84,10 @@ export function Baccarat() {
     else winner = 'tie';
 
     const won = winner === betType;
-    const mult = betType === 'tie' ? (winner === 'tie' ? 9 : 0) : (won ? (betType === 'banker' ? 1.95 : 2) : 0);
+    // Tie pushes (bet returned) for player/banker bets — standard baccarat rule
+    const mult = betType === 'tie'
+      ? (winner === 'tie' ? 9 : 0)
+      : (won ? (betType === 'banker' ? 1.95 : 2) : (winner === 'tie' ? 1 : 0));
     const returned = Math.round(bet * mult);
 
     updateBank(-bet);

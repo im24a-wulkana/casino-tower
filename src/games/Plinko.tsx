@@ -25,7 +25,7 @@ const RISK_CONFIG = {
   },
   HIGH: {
     label: 'HIGH',
-    mults:  [115, 2, 0, 0, 0, 0, 0, 2, 115],
+    mults:  [105, 2, 0, 0, 0, 0, 0, 2, 105],
     colors: ['#c9a84c','#8a3a00','#4a0000','#4a0000','#4a0000','#4a0000','#4a0000','#8a3a00','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.4,
