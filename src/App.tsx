@@ -58,9 +58,29 @@ const GAME_COMPONENTS: Record<string, React.ComponentType> = {
 };
 
 function Casino() {
-  const { state, isDev, pause } = useGame();
+  const { state, isDev, pause, setActiveGame } = useGame();
   const { logout, username } = useAuth();
-  const ActiveGame = state.activeGame ? GAME_COMPONENTS[state.activeGame] : null;
+
+  // Get game from URL or state
+  const urlPath = window.location.pathname;
+  const gameIdFromUrl = urlPath.split('/').pop();
+  const isValidGameUrl = gameIdFromUrl && gameIdFromUrl !== '' && Object.keys(GAME_COMPONENTS).includes(gameIdFromUrl);
+  const activeGameId = isValidGameUrl ? gameIdFromUrl : state.activeGame;
+  const ActiveGame = activeGameId ? GAME_COMPONENTS[activeGameId] : null;
+
+  // Sync URL with state when activeGame changes
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    const expectedPath = state.activeGame ? `/${state.activeGame}` : '/';
+    if (currentPath !== expectedPath) {
+      window.history.replaceState(null, '', expectedPath);
+    }
+  }, [state.activeGame]);
+
+  // When setting active game from grid, update URL
+  const handleSetActiveGame = (gameId: string) => {
+    setActiveGame(gameId);
+  };
 
   return (
     <div className="app" data-floor={state.floor}>
@@ -68,7 +88,7 @@ function Casino() {
       <div className="main-layout">
         <Sidebar />
         <main className="main-content">
-          {ActiveGame ? <ActiveGame /> : <GameGrid />}
+          {ActiveGame ? <ActiveGame /> : <GameGrid onSelectGame={handleSetActiveGame} />}
         </main>
       </div>
       {state.phase === 'paused'    && <PauseScreen />}

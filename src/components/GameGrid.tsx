@@ -17,8 +17,17 @@ const IMPLEMENTED = new Set([
   'case-opening','case-battle','ticket-shop',
 ]);
 
-export function GameGrid() {
+interface GameGridProps {
+  onSelectGame?: (gameId: string) => void;
+}
+
+export function GameGrid({ onSelectGame }: GameGridProps) {
   const { state, setActiveGame } = useGame();
+
+  const handleSelectGame = (id: string) => {
+    onSelectGame?.(id);
+    setActiveGame(id);
+  };
 
   return (
     <div className="game-grid-wrap">
@@ -38,7 +47,7 @@ export function GameGrid() {
               key={id}
               className={`game-card ${available ? 'game-card-available' : 'game-card-locked'}`}
               style={{ '--accent': accent } as React.CSSProperties}
-              onClick={() => available && setActiveGame(id)}
+              onClick={() => available && handleSelectGame(id)}
               disabled={!available}
             >
               <div className="game-card-floor">FLOOR {meta.floor}</div>
