@@ -3809,9 +3809,11 @@ input { font-family: var(--font-mono); }
 .ts-machines-container {
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   gap: 32px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding: 16px;
+  max-width: 100%;
 }
 
 .ts-machine-wrapper {
