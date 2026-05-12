@@ -10,7 +10,7 @@ import {
 import { Collectible } from '../types';
 
 const REEL_SIZE = 40;
-const ITEM_STRIDE = 88; // px — item width (80) + gap (8)
+const ITEM_STRIDE = 88;
 
 type Phase = 'idle' | 'spinning' | 'result';
 
@@ -18,16 +18,6 @@ interface MachineTickets { basic: number; premium: number; elite: number }
 
 function stopIdxForSpin(): number {
   return Math.floor(REEL_SIZE * 0.65) + Math.floor(Math.random() * 8);
-}
-
-function buildReel(machineId: string, winner: CollectibleDef): CollectibleDef[] {
-  const pool = COLLECTIBLE_POOL.filter(c => c.machineIds.includes(machineId));
-  const idx = stopIdxForSpin();
-  const reel = Array.from({ length: REEL_SIZE }, (_, i) =>
-    i === idx ? winner : pool[Math.floor(Math.random() * pool.length)]
-  );
-  (reel as (CollectibleDef & { _stopIdx?: number }))[0]._stopIdx = idx;
-  return reel;
 }
 
 export function TicketShop() {
@@ -38,13 +28,9 @@ export function TicketShop() {
   const [reel, setReel] = useState<CollectibleDef[]>([]);
   const [stopIdx, setStopIdx] = useState(0);
   const [wonItem, setWonItem] = useState<CollectibleDef | null>(null);
+  const [spinIntensity, setSpinIntensity] = useState(0); // 0-2 for animation intensity
   const reelRef = useRef<HTMLDivElement>(null);
 
-  // Per-machine ticket counts derived from game state
-  // We store all tickets in a flat pool per machine in gs — but since types use single tickets number,
-  // we use a local breakdown keyed by machine, stored as part of game state tickets object.
-  // For simplicity: gs.tickets is total count; we track machine affinity via a separate local map
-  // stored in localStorage (not critical data).
   const [machineTickets, setMachineTickets] = useState<MachineTickets>(() => {
     try {
       const raw = localStorage.getItem('ct_mtickets');
@@ -87,17 +73,20 @@ export function TicketShop() {
     setReel(reelItems);
     setStopIdx(idx);
     setWonItem(null);
+    // Set intensity based on machine tier: basic=0, premium=1, elite=2
+    const intensities = { basic: 0, premium: 1, elite: 2 };
+    setSpinIntensity(intensities[machine.id as keyof typeof intensities] ?? 0);
     setPhase('spinning');
   };
 
-  // Animate reel
+  // Animate reel with intensity-based effects
   useEffect(() => {
     if (phase !== 'spinning' || reel.length === 0) return;
     const el = reelRef.current;
     if (!el) return;
 
     const containerW = el.parentElement!.offsetWidth;
-    const centerOffset = containerW / 2 - 80 / 2; // 80 = item visual width
+    const centerOffset = containerW / 2 - 80 / 2;
     const targetOffset = stopIdx * ITEM_STRIDE - centerOffset;
 
     el.style.transition = 'none';
@@ -105,8 +94,11 @@ export function TicketShop() {
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        el.style.transition = 'transform 4s cubic-bezier(0.10, 0.85, 0.18, 1)';
-        el.style.transform = `translateX(-${targetOffset}px)`;
+        // More spins for higher intensity
+        const spins = 5 + spinIntensity * 3; // 5-11 rotations
+        const easing = ['cubic-bezier(0.10, 0.85, 0.18, 1)', 'cubic-bezier(0.05, 0.8, 0.1, 1)', 'cubic-bezier(0.02, 0.7, 0.05, 1)'][spinIntensity];
+        el.style.transition = `transform ${3.5 + spinIntensity * 0.8}s ${easing}`;
+        el.style.transform = `translateX(-${targetOffset}px) rotateZ(${spins * 360}deg)`;
       });
     });
 
@@ -116,7 +108,7 @@ export function TicketShop() {
       const collectible: Collectible = { ...won, obtainedAt: Date.now() };
       rollCollectible(collectible);
       setPhase('result');
-    }, 4400);
+    }, 3500 + spinIntensity * 800);
 
     return () => clearTimeout(t);
   }, [phase, reel]);
@@ -131,58 +123,71 @@ export function TicketShop() {
     <div className="game-view ts-wrap">
       <GameHeader title="TICKET SHOP" bank={gs.bank} onLeave={leave} />
 
-      {/* Machine selector */}
-      <div className="ts-machines">
-        {MACHINES.map(m => {
-          const myTickets = ticketsForMachine(m.id);
-          const canAfford = isDev || gs.bank >= m.ticketBuyCost;
-          const canSpin = isDev || myTickets > 0;
-          return (
-            <div
-              key={m.id}
-              className={`ts-machine ${activeMachine.id === m.id ? 'ts-machine-active' : ''}`}
-              style={{ '--mc': m.color } as React.CSSProperties}
-              onClick={() => setActiveMachine(m)}
-            >
-              <div className="ts-machine-emoji">{m.emoji}</div>
-              <div className="ts-machine-name">{m.name}</div>
-              <div className="ts-machine-desc">{m.description}</div>
-              <div className="ts-machine-ticket-price">
-                🎟 Ticket: <strong>{formatMoney(m.ticketBuyCost)}</strong>
-              </div>
-              <div className="ts-machine-ticket-count">
-                You have: <strong style={{ color: m.color }}>{isDev ? '∞' : myTickets}</strong>
-              </div>
-              <button
-                className="ts-buy-btn"
-                disabled={!canAfford}
-                onClick={e => { e.stopPropagation(); handleBuyTicket(m); }}
+      {/* Machine selector — single unified view */}
+      <div className="ts-selector">
+        <div className="ts-selector-title">Choose a vending machine:</div>
+        <div className="ts-machines-row">
+          {MACHINES.map(m => {
+            const myTickets = ticketsForMachine(m.id);
+            const canAfford = isDev || gs.bank >= m.ticketBuyCost;
+            const canSpin = isDev || myTickets > 0;
+            return (
+              <div
+                key={m.id}
+                className={`ts-machine-card ${activeMachine.id === m.id ? 'ts-machine-selected' : ''}`}
+                onClick={() => setActiveMachine(m)}
+                style={{ '--mc': m.color } as React.CSSProperties}
               >
-                BUY TICKET
-              </button>
-              <button
-                className={`ts-spin-btn ${!canSpin ? 'ts-spin-disabled' : ''}`}
-                disabled={!canSpin || phase === 'spinning'}
-                onClick={e => { e.stopPropagation(); handleSpin(m); }}
-              >
-                {phase === 'spinning' && activeMachine.id === m.id ? 'SPINNING…' : 'SPIN'}
-              </button>
-            </div>
-          );
-        })}
+                <div className="ts-mc-emoji">{m.emoji}</div>
+                <div className="ts-mc-name">{m.name}</div>
+                <div className="ts-mc-price">{formatMoney(m.ticketBuyCost)}</div>
+                <div className="ts-mc-tickets">
+                  <span style={{ color: m.color }}>🎟 {isDev ? '∞' : myTickets}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Reel area — shown when spinning or result */}
+      {/* Active machine controls */}
+      <div className="ts-machine-panel" style={{ '--mc': activeMachine.color } as React.CSSProperties}>
+        <div className="ts-mp-header">
+          <span className="ts-mp-emoji">{activeMachine.emoji}</span>
+          <div className="ts-mp-info">
+            <div className="ts-mp-name">{activeMachine.name}</div>
+            <div className="ts-mp-desc">{activeMachine.description}</div>
+          </div>
+        </div>
+        <div className="ts-mp-controls">
+          <button
+            className="ts-control-btn ts-buy-btn"
+            disabled={!isDev && gs.bank < activeMachine.ticketBuyCost}
+            onClick={() => handleBuyTicket(activeMachine)}
+          >
+            💳 BUY TICKET ({formatMoney(activeMachine.ticketBuyCost)})
+          </button>
+          <button
+            className={`ts-control-btn ts-spin-btn ${ticketsForMachine(activeMachine.id) <= 0 && !isDev ? 'ts-spin-disabled' : ''}`}
+            disabled={ticketsForMachine(activeMachine.id) <= 0 && !isDev}
+            onClick={() => handleSpin(activeMachine)}
+          >
+            {phase === 'spinning' ? '🎰 SPINNING…' : '🎰 SPIN'}
+          </button>
+        </div>
+      </div>
+
+      {/* Reel animation */}
       {(phase === 'spinning' || phase === 'result') && (
-        <div className="ts-reel-section">
+        <div className="ts-reel-section" style={{ '--intensity': spinIntensity } as React.CSSProperties}>
           <div className="ts-reel-title" style={{ color: activeMachine.color }}>
-            {phase === 'spinning' ? `${activeMachine.name} — SPINNING…` : wonItem ? `${wonItem.emoji} ${wonItem.name}` : ''}
+            {phase === 'spinning' ? '🎲 SPINNING…' : wonItem ? `${wonItem.emoji} ${wonItem.name}` : ''}
           </div>
 
           <div className="ts-reel-outer">
             <div className="ts-reel-marker" style={{ borderColor: activeMachine.color }} />
             <div className="ts-reel-window">
-              <div className="ts-reel" ref={reelRef}>
+              <div className={`ts-reel ${phase === 'spinning' ? 'ts-reel-active' : ''}`} ref={reelRef}>
                 {reel.map((item, i) => (
                   <div
                     key={i}
@@ -202,6 +207,11 @@ export function TicketShop() {
               </div>
             </div>
           </div>
+
+          {/* Machine glow effect during spin */}
+          {phase === 'spinning' && (
+            <div className={`ts-machine-glow ts-glow-intensity-${spinIntensity}`} />
+          )}
 
           {phase === 'result' && wonItem && (
             <div className="ts-result" style={{ borderColor: rarityColor(wonItem.rarity) }}>
@@ -224,22 +234,24 @@ export function TicketShop() {
       )}
 
       {/* Collection preview */}
-      <div className="ts-collection-preview">
-        <div className="ts-cp-title">YOUR COLLECTION ({(gs.collectibles ?? []).length})</div>
-        <div className="ts-cp-grid">
-          {[...(gs.collectibles ?? [])]
-            .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
-            .slice(0, 12)
-            .map((c, i) => (
-              <div key={i} className="ts-cp-item" style={{ borderColor: rarityColor(c.rarity) }} title={c.name}>
-                <span>{c.emoji}</span>
-              </div>
-            ))}
-          {(gs.collectibles ?? []).length === 0 && (
-            <div className="ts-cp-empty">No collectibles yet — spin to get some!</div>
-          )}
+      {phase === 'idle' && (
+        <div className="ts-collection-preview">
+          <div className="ts-cp-title">YOUR COLLECTION ({(gs.collectibles ?? []).length})</div>
+          <div className="ts-cp-grid">
+            {[...(gs.collectibles ?? [])]
+              .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
+              .slice(0, 12)
+              .map((c, i) => (
+                <div key={i} className="ts-cp-item" style={{ borderColor: rarityColor(c.rarity) }} title={c.name}>
+                  <span>{c.emoji}</span>
+                </div>
+              ))}
+            {(gs.collectibles ?? []).length === 0 && (
+              <div className="ts-cp-empty">No collectibles yet — spin to get some!</div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
