@@ -49,12 +49,6 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Tickets */}
-      <div className="sidebar-section">
-        <div className="sidebar-label">TICKETS</div>
-        <div className="sidebar-tickets">🎟 {state.tickets}</div>
-      </div>
-
       {/* History */}
       {state.gameHistory.length > 0 && (
         <div className="sidebar-section">

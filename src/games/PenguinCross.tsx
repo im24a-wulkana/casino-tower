@@ -4,8 +4,8 @@ import { formatMoney } from '../utils/gameLogic';
 import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from '../components/BettingPanel';
 
 const LANES = 6;
-const HIT_CHANCE = 0.28;
-const MULT_PER_LANE = 1.2;
+const HIT_CHANCE = 0.28;       // 72% survival per lane
+const MULT_PER_LANE = 1.38;    // 0.72^6 * 1.38^6 ≈ 0.95 RTP
 
 type Phase = 'betting' | 'crossing' | 'result';
 

@@ -5,7 +5,15 @@ import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from
 
 const GRID = 5;
 const MINES = 5;
-const MULT_PER_SAFE = 0.3;
+const TOTAL_CELLS = GRID * GRID; // 25
+const SAFE_CELLS = TOTAL_CELLS - MINES; // 20
+
+// Mathematically fair multiplier: 0.95 * product of (TOTAL_CELLS-i)/(SAFE_CELLS-i) for i=0..k-1
+function safeMult(k: number): number {
+  let m = 0.95;
+  for (let i = 0; i < k; i++) m *= (TOTAL_CELLS - i) / (SAFE_CELLS - i);
+  return m;
+}
 
 interface Cell { mine: boolean; revealed: boolean; }
 
@@ -38,7 +46,7 @@ export function MineSweeper() {
 
   const start = () => {
     updateBank(-bet);
-    setMs({ bet, cells: makeGrid(), safe: 0, mult: 1, result: null });
+    setMs({ bet, cells: makeGrid(), safe: 0, mult: safeMult(0), result: null });
     setPhase('playing');
   };
 
@@ -55,7 +63,7 @@ export function MineSweeper() {
       setPhase('result');
     } else {
       const newSafe = ms.safe + 1;
-      const newMult = 1 + newSafe * MULT_PER_SAFE;
+      const newMult = safeMult(newSafe);
       setMs(s => s && { ...s, cells: newCells, safe: newSafe, mult: newMult });
     }
   };
