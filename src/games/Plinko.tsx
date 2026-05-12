@@ -348,17 +348,16 @@ export function Plinko() {
         {activeBalls.length > 1 && (
           <div className="plinko-ball-counter">{activeBalls.length} balls in play</div>
         )}
+        {ballResults.length > 0 && (
+          <div className="plinko-ball-log">
+            {ballResults.slice(-5).map(r => (
+              <div key={r.id} className={r.net >= 0 ? 'win' : 'loss'} style={{ fontSize: 12, background: 'rgba(0,0,0,0.6)', padding: '1px 6px', borderRadius: 3 }}>
+                {r.mult}× — {r.net >= 0 ? '+' : ''}{formatMoney(r.net)}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-
-      {ballResults.length > 0 && (
-        <div className="plinko-ball-log">
-          {ballResults.slice(-5).map(r => (
-            <div key={r.id} className={r.net >= 0 ? 'win' : 'loss'} style={{ fontSize: 12 }}>
-              {r.mult}× — {r.net >= 0 ? '+' : ''}{formatMoney(r.net)}
-            </div>
-          ))}
-        </div>
-      )}
 
 
 

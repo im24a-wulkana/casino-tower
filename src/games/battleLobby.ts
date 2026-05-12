@@ -1,6 +1,4 @@
-// Shared localStorage-based battle lobby
-// Simulates an online lobby for same-device multiplayer / "watching" other battles
-
+import { supabase } from '../lib/supabase';
 import { CaseDef, CaseItem, rollItem } from './cases';
 
 export type SlotType = 'human' | 'bot' | 'empty';
@@ -12,14 +10,14 @@ export interface LobbyPlayer {
   type: SlotType;
   name: string;
   teamIdx: number;
-  items: CaseItem[];   // one item per case opened
+  items: CaseItem[];
   done: boolean;
 }
 
 export interface LobbyBattle {
   id: string;
   mode: BattleMode;
-  caseIds: string[];          // ordered list of case ids, all players open these
+  caseIds: string[];
   status: BattleStatus;
   createdAt: number;
   hostName: string;
@@ -28,38 +26,99 @@ export interface LobbyBattle {
   winningTeams: number[];
 }
 
-const KEY = 'ct_battles';
-const MAX_AGE_MS = 10 * 60 * 1000; // prune battles older than 10 min
+// ── DB row ↔ LobbyBattle conversion ─────────────────────────────────────────
 
-export function readBattles(): LobbyBattle[] {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return [];
-    const all: LobbyBattle[] = JSON.parse(raw);
-    const cutoff = Date.now() - MAX_AGE_MS;
-    return all.filter(b => b.createdAt > cutoff);
-  } catch { return []; }
+function fromRow(row: Record<string, unknown>): LobbyBattle {
+  return {
+    id:           row.id as string,
+    mode:         row.mode as BattleMode,
+    caseIds:      row.case_ids as string[],
+    status:       row.status as BattleStatus,
+    createdAt:    new Date(row.created_at as string).getTime(),
+    hostName:     row.host_name as string,
+    players:      row.players as LobbyPlayer[],
+    teamTotals:   row.team_totals as number[],
+    winningTeams: row.winning_teams as number[],
+  };
 }
 
-export function writeBattles(battles: LobbyBattle[]) {
-  localStorage.setItem(KEY, JSON.stringify(battles));
+function toRow(b: LobbyBattle) {
+  return {
+    id:            b.id,
+    mode:          b.mode,
+    case_ids:      b.caseIds,
+    status:        b.status,
+    host_name:     b.hostName,
+    players:       b.players,
+    team_totals:   b.teamTotals,
+    winning_teams: b.winningTeams,
+  };
 }
 
-export function saveBattle(battle: LobbyBattle) {
-  const all = readBattles();
-  const idx = all.findIndex(b => b.id === battle.id);
-  if (idx >= 0) all[idx] = battle;
-  else all.push(battle);
-  writeBattles(all);
+// ── CRUD ─────────────────────────────────────────────────────────────────────
+
+export async function readBattles(): Promise<LobbyBattle[]> {
+  const cutoff = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+  const { data } = await supabase
+    .from('battles')
+    .select('*')
+    .gt('created_at', cutoff)
+    .neq('status', 'done');
+  return (data ?? []).map(fromRow);
 }
 
-export function deleteBattle(id: string) {
-  writeBattles(readBattles().filter(b => b.id !== id));
+export async function saveBattle(battle: LobbyBattle): Promise<void> {
+  await supabase.from('battles').upsert(toRow(battle));
 }
 
-export function getBattle(id: string): LobbyBattle | null {
-  return readBattles().find(b => b.id === id) ?? null;
+export async function deleteBattle(id: string): Promise<void> {
+  await supabase.from('battles').delete().eq('id', id);
 }
+
+export async function getBattle(id: string): Promise<LobbyBattle | null> {
+  const { data } = await supabase.from('battles').select('*').eq('id', id).maybeSingle();
+  return data ? fromRow(data) : null;
+}
+
+// ── Realtime subscription ────────────────────────────────────────────────────
+
+export function subscribeToBattle(
+  battleId: string,
+  onChange: (battle: LobbyBattle) => void,
+) {
+  const channel = supabase
+    .channel(`battle:${battleId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'battles', filter: `id=eq.${battleId}` },
+      payload => {
+        if (payload.new && typeof payload.new === 'object') {
+          onChange(fromRow(payload.new as Record<string, unknown>));
+        }
+      },
+    )
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+}
+
+export function subscribeToLobby(
+  onChange: (battles: LobbyBattle[]) => void,
+) {
+  const channel = supabase
+    .channel('lobby')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'battles' },
+      async () => {
+        const battles = await readBattles();
+        onChange(battles);
+      },
+    )
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 export function modeConfig(mode: BattleMode): { teams: number; perTeam: number } {
   switch (mode) {
@@ -127,10 +186,7 @@ export function makeBattle(
   };
 }
 
-export function resolveBattle(
-  battle: LobbyBattle,
-  cases: CaseDef[],
-): LobbyBattle {
+export function resolveBattle(battle: LobbyBattle): LobbyBattle {
   const { teams } = modeConfig(battle.mode);
   const totals = Array(teams).fill(0);
   battle.players.forEach(p => {
@@ -154,5 +210,5 @@ export function rollAllItems(battle: LobbyBattle, cases: CaseDef[]): LobbyBattle
       return { ...p, items, done: true };
     }),
   };
-  return resolveBattle(updated, cases);
+  return resolveBattle(updated);
 }

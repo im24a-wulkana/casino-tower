@@ -3,14 +3,15 @@ import { useGame } from '../store/gameStore';
 import { useAuth } from '../store/authStore';
 import { GameHeader, useGameToast, GameToast } from '../components/BettingPanel';
 import { CASES, CaseDef, CaseItem, oddsPercent, formatVal } from './cases';
+import { rollItem } from './cases';
 import {
   LobbyBattle, LobbyPlayer,
   BattleMode, BattleStatus,
   readBattles, saveBattle, deleteBattle, getBattle,
+  subscribeToBattle, subscribeToLobby,
   makeBattle, entryFee, totalPot, totalSlots,
   modeConfig, isFFA,
 } from './battleLobby';
-import { rollItem } from './cases';
 
 const BATTLE_MODES: { mode: BattleMode; label: string; desc: string }[] = [
   { mode: '1v1',     label: '1v1',      desc: 'Classic duel' },
@@ -25,8 +26,6 @@ const TEAM_LABELS = ['TEAM A', 'TEAM B', 'TEAM C', 'TEAM D'];
 const BOT_NAMES   = ['GHOST','VIPER','NOVA','BLAZE','WRAITH','JINX','ACE','ROOK','STORM','PIXEL'];
 
 type Screen = 'lobby' | 'create' | 'battle';
-
-// ─── Helper: render a single player card ────────────────────────────────────
 
 function PlayerCard({
   player, caseIds, isMe, phase,
@@ -70,67 +69,83 @@ function PlayerCard({
   );
 }
 
-// ─── Main component ──────────────────────────────────────────────────────────
-
 export function CaseBattle() {
   const { state: gs, updateBank, setActiveGame, declareBankruptcy } = useGame();
   const { username } = useAuth();
   const { toast, show } = useGameToast();
 
-  const [screen, setScreen]           = useState<Screen>('lobby');
-  const [lobbies, setLobbies]         = useState<LobbyBattle[]>([]);
+  const [screen, setScreen]             = useState<Screen>('lobby');
+  const [lobbies, setLobbies]           = useState<LobbyBattle[]>([]);
   const [activeBattle, setActiveBattle] = useState<LobbyBattle | null>(null);
-  const [previewCase, setPreviewCase] = useState<CaseDef | null>(null);
+  const [previewCase, setPreviewCase]   = useState<CaseDef | null>(null);
+  const [loading, setLoading]           = useState(false);
   const mySlotId = useRef(`player-${username ?? 'you'}-${Math.random().toString(36).slice(2,6)}`);
+  const paidOutRef = useRef(false);
 
-  // ── Create form state
   const [mode, setMode]               = useState<BattleMode>('1v1');
   const [pickedCases, setPickedCases] = useState<string[]>(['street']);
 
-  // ── Poll lobby every second
+  // ── Load lobby + subscribe to realtime updates
   useEffect(() => {
-    const poll = () => setLobbies(readBattles().filter(b => b.status !== 'done'));
-    poll();
-    const id = setInterval(poll, 1000);
-    return () => clearInterval(id);
+    readBattles().then(setLobbies);
+    const unsub = subscribeToLobby(setLobbies);
+    return unsub;
   }, []);
 
-  // ── Poll active battle
+  // ── Subscribe to active battle via Realtime
   useEffect(() => {
     if (!activeBattle) return;
-    const id = setInterval(() => {
-      const fresh = getBattle(activeBattle.id);
-      if (fresh) setActiveBattle(fresh);
-    }, 500);
-    return () => clearInterval(id);
+    const unsub = subscribeToBattle(activeBattle.id, fresh => {
+      setActiveBattle(fresh);
+      // Pay out when battle finishes and we haven't paid yet
+      if (fresh.status === 'done' && !paidOutRef.current) {
+        paidOutRef.current = true;
+        const myPlayer = fresh.players.find(p => p.slotId === mySlotId.current);
+        if (myPlayer) {
+          const myTeam = myPlayer.teamIdx;
+          const { perTeam } = modeConfig(fresh.mode);
+          const pot = totalPot(fresh, CASES);
+          if (fresh.winningTeams.includes(myTeam)) {
+            const share = Math.floor(pot / fresh.winningTeams.length / perTeam);
+            updateBank(share * perTeam);
+            show(true, `TEAM ${String.fromCharCode(65 + myTeam)} WINS!`, share * perTeam - entryFee(fresh, CASES));
+          } else {
+            show(false, 'YOU LOSE', -entryFee(fresh, CASES));
+          }
+        }
+      }
+    });
+    return unsub;
   }, [activeBattle?.id]);
 
-  // ── Derived
-  const fee        = pickedCases.reduce((s, id) => s + (CASES.find(c => c.id === id)?.price ?? 0), 0);
-  const numSlots   = totalSlots(mode);
-  const canAfford  = gs.bank >= fee;
-  const myName     = username ?? 'YOU';
+  const fee       = pickedCases.reduce((s, id) => s + (CASES.find(c => c.id === id)?.price ?? 0), 0);
+  const numSlots  = totalSlots(mode);
+  const canAfford = gs.bank >= fee;
+  const myName    = username ?? 'YOU';
 
-  // ── Case list helpers
   const addCase    = (id: string) => setPickedCases(prev => [...prev, id]);
   const removeCase = (idx: number) => setPickedCases(prev => prev.filter((_, i) => i !== idx));
 
   // ── Create battle
-  const createBattle = () => {
+  const createBattle = async () => {
     if (!canAfford || pickedCases.length === 0) return;
+    setLoading(true);
     updateBank(-fee);
     const battle = makeBattle(mode, pickedCases, myName, mySlotId.current);
-    saveBattle(battle);
+    await saveBattle(battle);
+    paidOutRef.current = false;
     setActiveBattle(battle);
     setScreen('battle');
+    setLoading(false);
   };
 
   // ── Join battle
-  const joinBattle = (battle: LobbyBattle) => {
+  const joinBattle = async (battle: LobbyBattle) => {
     const fee2 = entryFee(battle, CASES);
     if (gs.bank < fee2) return;
     const emptySlot = battle.players.find(p => p.type === 'empty');
     if (!emptySlot) return;
+    setLoading(true);
     updateBank(-fee2);
     const updated: LobbyBattle = {
       ...battle,
@@ -140,136 +155,107 @@ export function CaseBattle() {
           : p
       ),
     };
-    saveBattle(updated);
+    await saveBattle(updated);
+    paidOutRef.current = false;
     setActiveBattle(updated);
     setScreen('battle');
+    setLoading(false);
   };
 
   // ── Fill slot with bot
-  const fillBot = (slotId: string) => {
+  const fillBot = async (slotId: string) => {
     if (!activeBattle) return;
     const usedNames = activeBattle.players.map(p => p.name);
     const name = BOT_NAMES.find(n => !usedNames.includes(n)) ?? 'BOT';
     const updated: LobbyBattle = {
       ...activeBattle,
       players: activeBattle.players.map(p =>
-        p.slotId === slotId ? { ...p, type: 'bot', name } : p
+        p.slotId === slotId ? { ...p, type: 'bot' as const, name } : p
       ),
     };
-    saveBattle(updated);
+    await saveBattle(updated);
     setActiveBattle(updated);
   };
 
-  const fillAllBots = () => {
+  const fillAllBots = async () => {
     if (!activeBattle) return;
-    let battle = { ...activeBattle, players: [...activeBattle.players] };
-    const usedNames = battle.players.map(p => p.name);
+    const usedNames = activeBattle.players.map(p => p.name);
     let namePool = BOT_NAMES.filter(n => !usedNames.includes(n));
-    battle.players = battle.players.map(p => {
-      if (p.type !== 'empty') return p;
-      const name = namePool.shift() ?? 'BOT';
-      return { ...p, type: 'bot', name };
-    });
-    saveBattle(battle);
-    setActiveBattle(battle);
+    const updated: LobbyBattle = {
+      ...activeBattle,
+      players: activeBattle.players.map(p => {
+        if (p.type !== 'empty') return p;
+        const name = namePool.shift() ?? 'BOT';
+        return { ...p, type: 'bot' as const, name };
+      }),
+    };
+    await saveBattle(updated);
+    setActiveBattle(updated);
   };
 
-  // ── Start battle (host only)
-  const startBattle = useCallback(() => {
+  // ── Start battle (host only) — rolls all items and saves final state
+  const startBattle = useCallback(async () => {
     if (!activeBattle) return;
-    const allFilled = activeBattle.players.every(p => p.type !== 'empty');
-    if (!allFilled) return;
+    if (!activeBattle.players.every(p => p.type !== 'empty')) return;
 
-    // Show rolling state first
+    // Mark as running first so all clients see the live state
     const running: LobbyBattle = { ...activeBattle, status: 'running' };
-    saveBattle(running);
+    await saveBattle(running);
     setActiveBattle(running);
 
-    // Stagger reveals per player
-    const { teams, perTeam } = modeConfig(activeBattle.mode);
-    const numPlayers = teams * perTeam;
+    // Stagger reveals per player then save final resolved state
+    const numPlayers = activeBattle.players.length;
+    const allItems = activeBattle.players.map(() =>
+      activeBattle.caseIds.map(cId => rollItem(CASES.find(c => c.id === cId)!))
+    );
 
-    activeBattle.players.forEach((_, idx) => {
-      const delay = 600 + idx * 700 + Math.random() * 300;
-      setTimeout(() => {
-        setActiveBattle(prev => {
-          if (!prev) return prev;
-          const fresh = getBattle(prev.id) ?? prev;
+    // Reveal each player's items one by one with a delay
+    for (let idx = 0; idx < numPlayers; idx++) {
+      await new Promise(res => setTimeout(res, 600 + idx * 700 + Math.random() * 300));
+      const current = await getBattle(activeBattle.id);
+      if (!current) return;
+      const next: LobbyBattle = {
+        ...current,
+        players: current.players.map((p, i) =>
+          i === idx ? { ...p, items: allItems[i], done: true } : p
+        ),
+      };
+      await saveBattle(next);
+      setActiveBattle(next);
+    }
 
-          // Roll items for this player
-          const items: CaseItem[] = prev.caseIds.map(cId => {
-            const caseDef = CASES.find(c => c.id === cId)!;
-            return rollItem(caseDef);
-          });
-
-          const next: LobbyBattle = {
-            ...fresh,
-            players: fresh.players.map((p, i) =>
-              i === idx ? { ...p, items, done: true } : p
-            ),
-          };
-
-          // If all done, resolve
-          if (next.players.every(p => p.done)) {
-            const resolved = resolveAndPay(next);
-            saveBattle(resolved);
-            return resolved;
-          }
-
-          saveBattle(next);
-          return next;
-        });
-      }, delay);
-    });
-  }, [activeBattle]);
-
-  // ── Resolve and pay out
-  const resolveAndPay = (battle: LobbyBattle): LobbyBattle => {
-    const { teams } = modeConfig(battle.mode);
+    // Resolve
+    const final = await getBattle(activeBattle.id);
+    if (!final) return;
+    const { teams } = modeConfig(final.mode);
     const totals = Array(teams).fill(0);
-    battle.players.forEach(p => {
-      totals[p.teamIdx] += p.items.reduce((s, i) => s + i.value, 0);
-    });
-
-    const isCrazyMode = battle.mode === 'crazy';
+    final.players.forEach(p => { totals[p.teamIdx] += p.items.reduce((s, i) => s + i.value, 0); });
+    const isCrazyMode = final.mode === 'crazy';
     const best = isCrazyMode ? Math.min(...totals) : Math.max(...totals);
     const winners = totals.map((t, i) => t === best ? i : -1).filter(i => i >= 0);
+    const resolved: LobbyBattle = { ...final, status: 'done', teamTotals: totals, winningTeams: winners };
+    await saveBattle(resolved);
+    setActiveBattle(resolved);
+  }, [activeBattle]);
 
-    const pot = totalPot(battle, CASES);
-    const myPlayer = battle.players.find(p => p.slotId === mySlotId.current);
-    if (myPlayer) {
-      const myTeam = myPlayer.teamIdx;
-      const { perTeam } = modeConfig(battle.mode);
-      if (winners.includes(myTeam)) {
-        const share = Math.floor(pot / winners.length / perTeam);
-        updateBank(share * perTeam);
-        const net = share * perTeam - entryFee(battle, CASES);
-        show(true, `TEAM ${String.fromCharCode(65 + myTeam)} WINS!`, net);
-      } else {
-        show(false, 'YOU LOSE', -entryFee(battle, CASES));
-      }
-    }
-
-    return { ...battle, status: 'done', teamTotals: totals, winningTeams: winners };
-  };
-
-  // ── Leave / reset
-  const leaveBattle = () => {
+  // ── Leave
+  const leaveBattle = async () => {
     if (activeBattle && activeBattle.status === 'waiting') {
       const isHost = activeBattle.players[0].slotId === mySlotId.current;
-      if (isHost) deleteBattle(activeBattle.id);
+      if (isHost) await deleteBattle(activeBattle.id);
     }
+    paidOutRef.current = false;
     setActiveBattle(null);
     setScreen('lobby');
   };
 
   const leaveGame = () => gs.bank <= 0 ? declareBankruptcy() : setActiveGame(null);
 
-  const amHost = activeBattle?.players[0]?.slotId === mySlotId.current;
-  const mySlot = activeBattle?.players.find(p => p.slotId === mySlotId.current);
+  const amHost    = activeBattle?.players[0]?.slotId === mySlotId.current;
+  const mySlot    = activeBattle?.players.find(p => p.slotId === mySlotId.current);
   const allFilled = activeBattle?.players.every(p => p.type !== 'empty') ?? false;
-  const ffa = activeBattle ? isFFA(activeBattle.mode) : false;
-  const byTeam = activeBattle
+  const ffa       = activeBattle ? isFFA(activeBattle.mode) : false;
+  const byTeam    = activeBattle
     ? Array.from({ length: modeConfig(activeBattle.mode).teams }, (_, t) =>
         activeBattle.players.filter(p => p.teamIdx === t))
     : [];
@@ -303,7 +289,7 @@ export function CaseBattle() {
         </div>
       )}
 
-      {/* ── LOBBY SCREEN ── */}
+      {/* ── LOBBY ── */}
       {screen === 'lobby' && (
         <div className="cb-lobby">
           <div className="cb-lobby-header">
@@ -320,10 +306,10 @@ export function CaseBattle() {
 
           <div className="cb-lobby-list">
             {lobbies.map(battle => {
-              const fee2 = entryFee(battle, CASES);
-              const pot2 = totalPot(battle, CASES);
+              const fee2     = entryFee(battle, CASES);
+              const pot2     = totalPot(battle, CASES);
               const openSlots = battle.players.filter(p => p.type === 'empty').length;
-              const caseList = [...new Set(battle.caseIds)];
+              const caseList  = [...new Set(battle.caseIds)];
               return (
                 <div key={battle.id} className="cb-lobby-row">
                   <div className="cb-lobby-row-left">
@@ -334,8 +320,8 @@ export function CaseBattle() {
                         return c ? (
                           <span key={id} className="cb-lobby-case-chip"
                             style={{ borderColor: c.color, color: c.color }}>
-                            {c.emoji} {battle.caseIds.filter(x => x === id).length > 1
-                              ? `×${battle.caseIds.filter(x => x === id).length}` : ''}
+                            {c.emoji}{battle.caseIds.filter(x => x === id).length > 1
+                              ? ` ×${battle.caseIds.filter(x => x === id).length}` : ''}
                           </span>
                         ) : null;
                       })}
@@ -348,14 +334,14 @@ export function CaseBattle() {
                     {openSlots > 0 && battle.status === 'waiting' ? (
                       <button
                         className="btn-primary cb-join-btn"
-                        disabled={gs.bank < fee2}
+                        disabled={gs.bank < fee2 || loading}
                         onClick={() => joinBattle(battle)}
                       >
                         JOIN — {formatVal(fee2)}
                       </button>
                     ) : (
                       <button className="btn-secondary cb-join-btn"
-                        onClick={() => { setActiveBattle(battle); setScreen('battle'); }}>
+                        onClick={() => { paidOutRef.current = true; setActiveBattle(battle); setScreen('battle'); }}>
                         WATCH
                       </button>
                     )}
@@ -367,7 +353,7 @@ export function CaseBattle() {
         </div>
       )}
 
-      {/* ── CREATE SCREEN ── */}
+      {/* ── CREATE ── */}
       {screen === 'create' && (
         <div className="cb-setup">
           <div className="cb-setup-nav">
@@ -391,7 +377,6 @@ export function CaseBattle() {
             YOUR CASES — entry fee: {formatVal(fee)} · pot: {formatVal(fee * numSlots)}
           </div>
 
-          {/* Selected cases list */}
           <div className="cb-picked-cases">
             {pickedCases.map((id, idx) => {
               const c = CASES.find(x => x.id === id)!;
@@ -429,19 +414,18 @@ export function CaseBattle() {
           <div className="cb-actions">
             <button className="btn-secondary" onClick={() => setScreen('lobby')}>CANCEL</button>
             <button className="btn-primary"
-              disabled={!canAfford || pickedCases.length === 0}
+              disabled={!canAfford || pickedCases.length === 0 || loading}
               onClick={createBattle}>
-              CREATE — {formatVal(fee)}
+              {loading ? 'CREATING…' : `CREATE — ${formatVal(fee)}`}
             </button>
           </div>
           {!canAfford && <div className="cb-cant-afford">Insufficient funds</div>}
         </div>
       )}
 
-      {/* ── BATTLE SCREEN ── */}
+      {/* ── BATTLE ── */}
       {screen === 'battle' && activeBattle && (
         <div className="cb-arena">
-          {/* Pot + status bar */}
           <div className="cb-arena-pot">
             <span className="cb-pot-label">POT</span>
             <span className="cb-pot-value">{formatVal(totalPot(activeBattle, CASES))}</span>
@@ -451,7 +435,6 @@ export function CaseBattle() {
             {activeBattle.mode === 'crazy' && <span className="cb-crazy-badge">🔥 CRAZY — LOWEST WINS</span>}
           </div>
 
-          {/* Case headers */}
           <div className="cb-arena-case-headers">
             {activeBattle.caseIds.map((id, i) => {
               const c = CASES.find(x => x.id === id)!;
@@ -463,7 +446,6 @@ export function CaseBattle() {
             })}
           </div>
 
-          {/* Teams */}
           <div className={`cb-arena-teams ${ffa ? 'cb-ffa' : ''}`}>
             {byTeam.map((team, tIdx) => {
               const isWinner = activeBattle.winningTeams.includes(tIdx);
@@ -516,7 +498,6 @@ export function CaseBattle() {
             })}
           </div>
 
-          {/* Waiting — host controls */}
           {activeBattle.status === 'waiting' && amHost && (
             <div className="cb-host-controls">
               <button className="btn-secondary" onClick={fillAllBots}>FILL WITH BOTS</button>
@@ -529,7 +510,6 @@ export function CaseBattle() {
             <div className="cb-waiting-msg">Waiting for host to start…</div>
           )}
 
-          {/* Result */}
           {activeBattle.status === 'done' && (
             <div className="cb-result-actions">
               {activeBattle.winningTeams.includes(mySlot?.teamIdx ?? -1) && (

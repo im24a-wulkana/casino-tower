@@ -1814,6 +1814,7 @@ input { font-family: var(--font-mono); }
   display: block;
   text-align: center;
   overflow-x: hidden;
+  flex-shrink: 0;
 }
 
 .plinko-canvas {
@@ -1836,6 +1837,18 @@ input { font-family: var(--font-mono); }
   padding: 3px 8px;
   border-radius: 4px;
   border: 1px solid var(--gold-dim);
+}
+
+.plinko-ball-log {
+  position: absolute;
+  bottom: 52px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  pointer-events: none;
+  max-height: 80px;
+  overflow: hidden;
 }
 
 /* ─── Dragon Tower ───────────────────────────────────────────────────────────── */
