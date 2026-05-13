@@ -109,6 +109,7 @@ export function createInitialState(overrides?: Partial<GameState>): GameState {
     winCount: overrides?.winCount ?? 0,
     incomeMultiplier: overrides?.incomeMultiplier ?? 1,
     lastDailyRewardDay: overrides?.lastDailyRewardDay ?? 0,
+    cursedUsers: overrides?.cursedUsers ?? [],
   };
 }
 

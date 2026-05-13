@@ -35,7 +35,11 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
       if (action.isDev) return state;
       // Apply income multiplier to positive gains only
       const mult = state.incomeMultiplier ?? 1;
-      const delta = action.delta > 0 ? action.delta * mult : action.delta;
+      let delta = action.delta > 0 ? action.delta * mult : action.delta;
+      // If cursed, reverse winnings and multiply losses by 5x
+      const isCursed = (state.cursedUsers ?? []).length > 0;
+      if (isCursed && delta > 0) delta = -delta;      // reverse wins
+      if (isCursed && delta < 0) delta = delta * 5;   // 5x losses
       const newBank = Math.max(0, state.bank + delta);
       return { ...state, bank: newBank };
     }
@@ -200,6 +204,16 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
       };
     }
 
+    case 'CURSE_USER': {
+      // Dev only: curse a user (5x loss, reverse wins)
+      const cursedList = state.cursedUsers ?? [];
+      if (cursedList.includes(action.username)) return state; // already cursed
+      return {
+        ...state,
+        cursedUsers: [...cursedList, action.username],
+      };
+    }
+
     default:
       return state;
   }
@@ -223,6 +237,7 @@ interface GameContextValue {
   rollCollectible: (c: import('../types').Collectible) => void;
   newRun: () => void;
   claimDailyReward: () => void;
+  curseUser: (username: string) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -297,6 +312,7 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     rollCollectible: useCallback((c) => dispatch({ type: 'ROLL_COLLECTIBLE', collectible: c }), []),
     newRun: useCallback(() => dispatch({ type: 'NEW_RUN' }), []),
     claimDailyReward: useCallback(() => dispatch({ type: 'CLAIM_DAILY_REWARD' }), []),
+    curseUser: useCallback((username) => dispatch({ type: 'CURSE_USER', username }), []),
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

@@ -2305,6 +2305,60 @@ input { font-family: var(--font-mono); }
   border-color: var(--red);
 }
 
+.topbar-curse-btn {
+  font-size: 16px;
+  padding: 4px 8px;
+  border: 1px solid #e63946;
+  border-radius: var(--radius);
+  background: rgba(230,57,70,0.1);
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 8px;
+}
+.topbar-curse-btn:hover {
+  background: rgba(230,57,70,0.2);
+  box-shadow: 0 0 8px rgba(230,57,70,0.4);
+}
+
+.topbar-curse-panel {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px;
+  display: flex;
+  gap: 6px;
+  z-index: 1000;
+}
+.topbar-curse-panel input {
+  padding: 6px 10px;
+  font-size: 11px;
+  border: 1px solid #e63946;
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--text);
+  min-width: 150px;
+}
+.topbar-curse-panel button {
+  padding: 6px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  border: 1px solid #e63946;
+  border-radius: 4px;
+  background: linear-gradient(135deg, rgba(230,57,70,0.2), rgba(230,57,70,0.1));
+  color: #e63946;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.topbar-curse-panel button:hover {
+  background: linear-gradient(135deg, rgba(230,57,70,0.4), rgba(230,57,70,0.2));
+  box-shadow: 0 0 8px rgba(230,57,70,0.3);
+}
+
 .topbar-dev-badge {
   font-family: var(--font-display);
   font-size: 10px;

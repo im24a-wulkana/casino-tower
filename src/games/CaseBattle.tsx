@@ -286,6 +286,17 @@ export function CaseBattle() {
         activeBattle.players.filter(p => p.teamIdx === t))
     : [];
 
+  if (!username) {
+    return (
+      <div className="game-view">
+        <GameHeader title="CASE BATTLE" bank={gs.bank} onLeave={leaveGame} />
+        <div style={{ padding: '40px', textAlign: 'center', color: '#888' }}>
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="game-view">
       <GameToast toast={toast} />
