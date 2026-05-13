@@ -206,7 +206,7 @@ interface GameContextValue {
   setFloor: (floor: number) => void;
   loadExternalState: (s: GameState) => void;
   pause: () => void;
-  resume: () => void;
+  resume: () => Promise<void>;
   buyTicket: (cost: number, machineId: string) => void;
   rollCollectible: (c: import('../types').Collectible) => void;
   newRun: () => void;
@@ -220,9 +220,11 @@ interface GameProviderProps {
   initialState?: GameState | null;
   onStateChange?: (state: GameState) => void;
   onDBUpdateRef?: React.MutableRefObject<((s: GameState) => void) | null>;
+  onResumeRef?: React.MutableRefObject<(() => Promise<void>) | null>;
+  refreshGameState?: () => Promise<GameState | null>;
 }
 
-export function GameProvider({ children, isDev, initialState, onStateChange, onDBUpdateRef }: GameProviderProps) {
+export function GameProvider({ children, isDev, initialState, onStateChange, onDBUpdateRef, onResumeRef, refreshGameState }: GameProviderProps) {
   const startState = isDev
     ? makeDevState()
     : (initialState ?? createInitialState());
@@ -269,7 +271,15 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     setFloor: useCallback((floor) => dispatch({ type: 'SET_FLOOR', floor }), []),
     loadExternalState,
     pause: useCallback(() => dispatch({ type: 'PAUSE' }), []),
-    resume: useCallback(() => dispatch({ type: 'RESUME' }), []),
+    resume: useCallback(async () => {
+      if (refreshGameState) {
+        const latest = await refreshGameState();
+        if (latest) {
+          dispatch({ type: 'LOAD_STATE', state: latest });
+        }
+      }
+      dispatch({ type: 'RESUME' });
+    }, [refreshGameState]),
     buyTicket: useCallback((cost, machineId) => dispatch({ type: 'BUY_TICKET', cost, machineId }), []),
     rollCollectible: useCallback((c) => dispatch({ type: 'ROLL_COLLECTIBLE', collectible: c }), []),
     newRun: useCallback(() => dispatch({ type: 'NEW_RUN' }), []),

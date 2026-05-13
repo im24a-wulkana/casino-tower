@@ -95,8 +95,9 @@ function Casino() {
 }
 
 function AuthedApp() {
-  const { username, isDev, saveGameState, loadGameState, onDBUpdate } = useAuth();
+  const { username, isDev, saveGameState, loadGameState, refreshGameState, onDBUpdate } = useAuth();
   const dbUpdateRef = useRef<((s: import('./types').GameState) => void) | null>(null);
+  const resumeRef = useRef<(() => Promise<void>) | null>(null);
 
   try {
     useEffect(() => {
@@ -120,6 +121,8 @@ function AuthedApp() {
         initialState={loadGameState()}
         onStateChange={saveGameState}
         onDBUpdateRef={dbUpdateRef}
+        onResumeRef={resumeRef}
+        refreshGameState={refreshGameState}
       >
         <Casino />
       </GameProvider>

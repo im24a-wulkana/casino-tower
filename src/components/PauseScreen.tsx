@@ -5,11 +5,23 @@ import { formatMoney, formatTime } from '../utils/gameLogic';
 export function PauseScreen() {
   const { state, resume } = useGame();
   const [visible, setVisible] = useState(false);
+  const [resuming, setResuming] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 50);
     return () => clearTimeout(t);
   }, []);
+
+  const handleResume = async () => {
+    setResuming(true);
+    try {
+      await resume();
+    } catch (err) {
+      console.error('Resume failed:', err);
+    } finally {
+      setResuming(false);
+    }
+  };
 
   return (
     <div className={`overlay-screen pause-overlay ${visible ? 'overlay-visible' : ''}`}>
@@ -29,8 +41,8 @@ export function PauseScreen() {
           </div>
         </div>
 
-        <button className="btn-primary pause-resume" onClick={resume}>
-          ▶ RESUME
+        <button className="btn-primary pause-resume" onClick={handleResume} disabled={resuming}>
+          {resuming ? '...' : '▶ RESUME'}
         </button>
       </div>
     </div>

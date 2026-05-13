@@ -14,6 +14,7 @@ export interface AuthContextValue {
   logout: () => void;
   saveGameState: (state: GameState) => void;
   loadGameState: () => GameState | null;
+  refreshGameState: () => Promise<GameState | null>;
   onDBUpdate: (cb: (state: GameState) => void) => () => void;
 }
 
@@ -162,8 +163,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return loadedState;
   }, [loadedState]);
 
+  const refreshGameState = useCallback(async (): Promise<GameState | null> => {
+    if (!username || username === DEV_USERNAME) return null;
+    try {
+      const { data, error } = await supabase.from('users')
+        .select('game_state')
+        .eq('username', username)
+        .single();
+      if (error) {
+        console.error('refreshGameState error:', error);
+        return loadedState;
+      }
+      if (data?.game_state) {
+        setCachedGameState(username, data.game_state);
+        setLoadedState(data.game_state);
+        return data.game_state;
+      }
+      return loadedState;
+    } catch (err) {
+      console.error('refreshGameState exception:', err);
+      return loadedState;
+    }
+  }, [username, loadedState]);
+
   return (
-    <AuthContext.Provider value={{ username, isDev, login, register, logout, saveGameState, loadGameState, onDBUpdate }}>
+    <AuthContext.Provider value={{ username, isDev, login, register, logout, saveGameState, loadGameState, refreshGameState, onDBUpdate }}>
       {children}
     </AuthContext.Provider>
   );
