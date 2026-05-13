@@ -45,6 +45,17 @@ export function Keno() {
     });
   };
 
+  const randomizeTiles = () => {
+    if (phase !== 'picking') return;
+    const pool = Array.from({ length: TOTAL }, (_, i) => i + 1);
+    const shuffled: number[] = [];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    setSelected(new Set(pool.slice(0, PICK_COUNT)));
+  };
+
   const draw = () => {
     if (selected.size < PICK_COUNT) return;
     updateBank(-bet);
@@ -59,7 +70,7 @@ export function Keno() {
     setPhase('result');
   };
 
-  const reset = () => { setPhase('picking'); setSelected(new Set()); setDrawn([]); setResult(null); setBet(v => Math.min(v, gs.bank)); };
+  const reset = () => { setPhase('picking'); setDrawn([]); setResult(null); setBet(v => Math.min(v, gs.bank)); };
   const leave = () => gs.bank <= 0 ? declareBankruptcy() : setActiveGame(null);
 
   return (
@@ -98,14 +109,19 @@ export function Keno() {
       </div>
 
       {phase === 'picking' && (
-        <BettingPanel
-          bank={gs.bank}
-          value={bet}
-          onChange={v => setBet(Math.max(1, Math.min(v, gs.bank)))}
-          onConfirm={draw}
-          confirmLabel="DRAW NUMBERS"
-          disabled={selected.size < PICK_COUNT}
-        />
+        <div className="keno-controls">
+          <BettingPanel
+            bank={gs.bank}
+            value={bet}
+            onChange={v => setBet(Math.max(1, Math.min(v, gs.bank)))}
+            onConfirm={draw}
+            confirmLabel="DRAW NUMBERS"
+            disabled={selected.size < PICK_COUNT}
+          />
+          <button className="keno-random-btn" onClick={randomizeTiles}>
+            🎲 RANDOM TILES
+          </button>
+        </div>
       )}
       {phase === 'result' && (
         <ResultActions bank={gs.bank} onPlayAgain={reset} onLeave={leave} onBankrupt={declareBankruptcy} playLabel="PLAY AGAIN" />
