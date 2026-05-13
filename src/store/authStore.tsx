@@ -59,6 +59,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch { return null; }
   });
 
+  // Debounced save to avoid hammering database
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingStateRef = useRef<GameState | null>(null);
+
   const isDev = username === DEV_USERNAME;
   const dbUpdateListeners = useRef<Set<(state: GameState) => void>>(new Set());
 
@@ -150,13 +154,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const saveGameState = useCallback((state: GameState) => {
     if (!username || username === DEV_USERNAME) return;
     setCachedGameState(username, state);
-    // Fire-and-forget upsert — we don't await to avoid blocking the game loop
-    supabase.from('users')
-      .update({ game_state: state })
-      .eq('username', username)
-      .then(({ error }) => {
-        if (error) console.warn('saveGameState DB error:', error.message);
-      });
+    pendingStateRef.current = state;
+
+    // Clear existing timeout and set a new one for debouncing
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      const stateToSave = pendingStateRef.current;
+      if (stateToSave) {
+        // Fire-and-forget upsert — we don't await to avoid blocking the game loop
+        supabase.from('users')
+          .update({ game_state: stateToSave })
+          .eq('username', username)
+          .then(({ error }) => {
+            if (error) console.warn('saveGameState DB error:', error.message);
+          });
+      }
+      saveTimeoutRef.current = null;
+    }, 1000); // Debounce for 1 second
   }, [username]);
 
   const loadGameState = useCallback((): GameState | null => {
@@ -185,6 +202,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return loadedState;
     }
   }, [username, loadedState]);
+
+  // Ensure pending state is saved on unmount
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      // Save any pending state immediately on unmount
+      if (pendingStateRef.current && username && username !== DEV_USERNAME) {
+        supabase.from('users')
+          .update({ game_state: pendingStateRef.current })
+          .eq('username', username)
+          .catch(err => console.warn('Unmount save error:', err));
+      }
+    };
+  }, [username]);
 
   return (
     <AuthContext.Provider value={{ username, isDev, login, register, logout, saveGameState, loadGameState, refreshGameState, onDBUpdate }}>
