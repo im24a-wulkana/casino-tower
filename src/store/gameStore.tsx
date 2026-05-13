@@ -140,9 +140,13 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
     }
 
     case 'ASCEND': {
-      // Day 15: bump multiplier and reset to day 1
+      // Day 15: bump multiplier based on bank amount (per 1B = +0.2%) and reset to day 1
       const newWinCount = (state.winCount ?? 0) + 1;
-      const newMult = Math.pow(1.2, newWinCount);
+      // Base: 1.2x per ascension
+      // Bonus: +0.2% per 1B in bank (e.g., 5B = +1% bonus)
+      const billionBonus = Math.floor(state.bank / 1_000_000_000) * 0.002;
+      const ascensionMult = 1.2 + billionBonus;
+      const newMult = Math.pow(ascensionMult, newWinCount);
       return createInitialState({
         collectibles: state.collectibles ?? [],
         tickets: state.tickets ?? 0,
