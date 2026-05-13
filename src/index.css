@@ -3862,6 +3862,7 @@ input { font-family: var(--font-mono); }
   flex-direction: column;
   gap: 14px;
   transition: transform 0.2s, box-shadow 0.2s;
+  overflow: hidden;
 }
 .ts-vending-machine:hover {
   transform: translateY(-4px);
@@ -4013,8 +4014,8 @@ input { font-family: var(--font-mono); }
 
 .ts-btn {
   flex: 1;
-  padding: 10px 12px;
-  font-size: 10px;
+  padding: 8px 10px;
+  font-size: 9px;
   font-weight: 700;
   border: none;
   border-radius: 6px;
