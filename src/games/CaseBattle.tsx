@@ -104,36 +104,36 @@ export function CaseBattle() {
     try {
       const unsub = subscribeToBattle(activeBattle.id, fresh => {
         setActiveBattle(fresh);
-      // Auto-start if all slots filled and we're the host
-      const isHost = fresh.players[0].slotId === mySlotId.current;
-      const allFilled = fresh.players.every(p => p.type !== 'empty');
-      if (isHost && fresh.status === 'waiting' && allFilled) {
-        runBattle(fresh);
-      }
-      // Pay out when battle finishes and we haven't paid yet
-      if (fresh.status === 'done' && !paidOutRef.current) {
-        paidOutRef.current = true;
-        const myPlayer = fresh.players.find(p => p.slotId === mySlotId.current);
-        if (myPlayer) {
-          const myTeam = myPlayer.teamIdx;
-          const { perTeam } = modeConfig(fresh.mode);
-          const pot = totalPot(fresh, CASES);
-          if (fresh.winningTeams.includes(myTeam)) {
-            const share = Math.floor(pot / fresh.winningTeams.length / perTeam);
-            updateBank(share * perTeam);
-            show(true, `TEAM ${String.fromCharCode(65 + myTeam)} WINS!`, share * perTeam - entryFee(fresh, CASES));
-          } else {
-            show(false, 'YOU LOSE', -entryFee(fresh, CASES));
+        // Auto-start if all slots filled and we're the host
+        const isHost = fresh.players[0].slotId === mySlotId.current;
+        const allFilled = fresh.players.every(p => p.type !== 'empty');
+        if (isHost && fresh.status === 'waiting' && allFilled) {
+          runBattle(fresh);
+        }
+        // Pay out when battle finishes and we haven't paid yet
+        if (fresh.status === 'done' && !paidOutRef.current) {
+          paidOutRef.current = true;
+          const myPlayer = fresh.players.find(p => p.slotId === mySlotId.current);
+          if (myPlayer) {
+            const myTeam = myPlayer.teamIdx;
+            const { perTeam } = modeConfig(fresh.mode);
+            const pot = totalPot(fresh, CASES);
+            if (fresh.winningTeams.includes(myTeam)) {
+              const share = Math.floor(pot / fresh.winningTeams.length / perTeam);
+              updateBank(share * perTeam);
+              show(true, `TEAM ${String.fromCharCode(65 + myTeam)} WINS!`, share * perTeam - entryFee(fresh, CASES));
+            } else {
+              show(false, 'YOU LOSE', -entryFee(fresh, CASES));
+            }
           }
         }
-      }
       });
       return unsub;
     } catch (err) {
       console.error('Failed to subscribe to battle:', err);
       return () => {};
     }
-  }, [activeBattle?.id, runBattle]);
+  }, [activeBattle?.id]);
 
   const fee       = pickedCases.reduce((s, id) => s + (CASES.find(c => c.id === id)?.price ?? 0), 0);
   const numSlots  = totalSlots(mode);
