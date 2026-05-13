@@ -16,11 +16,11 @@ function drawNumbers(): number[] {
   return pool.slice(0, DRAW_COUNT).sort((a, b) => a - b);
 }
 
-// P(3)=0.904%, P(4)=0.0266%, P(5)=0.000152% → EV ≈ 94.8%
+// Match 3: p=0.9042% → 110x, Match 4: p=0.0266% → 3750x, Match 5: p=0.0015% → 658000x → 100% RTP
 function payout(matches: number, bet: number): number {
-  if (matches === 3) return Math.round(bet * 85);
-  if (matches === 4) return Math.round(bet * 650);
-  if (matches === 5) return Math.round(bet * 4000);
+  if (matches === 3) return Math.round(bet * 110);
+  if (matches === 4) return Math.round(bet * 3750);
+  if (matches === 5) return Math.round(bet * 658000);
   return 0;
 }
 
@@ -85,7 +85,7 @@ export function Keno() {
               ? `SELECT ${PICK_COUNT - selected.size} MORE NUMBER${PICK_COUNT - selected.size !== 1 ? 'S' : ''}`
               : `DRAWN: ${drawn.join(', ')}`}
           </span>
-          <span className="keno-paytable">3 match = 85× | 4 match = 650× | 5 match = 4000×</span>
+          <span className="keno-paytable">3 match = 110× | 4 match = 3750× | 5 match = 658000×</span>
         </div>
 
         <div className="keno-grid">
