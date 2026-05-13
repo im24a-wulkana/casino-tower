@@ -40,10 +40,10 @@ export function getAvailableGames(floor: number, seed: number): string[] {
 }
 
 export function quotaForDay(day: number): number {
-  // Days 13-15: floor 5 — quota jumps to $10B and doubles each day
-  if (day === 13) return 10_000_000_000;
-  if (day === 14) return 20_000_000_000;
-  if (day === 15) return 40_000_000_000;
+  // Days 13-15: floor 5 — escalating quotas
+  if (day === 13) return 5_000_000;        // $5M
+  if (day === 14) return 75_000_000;       // $75M
+  if (day === 15) return 1_000_000_000;    // $1B
   let q = 2000;
   for (let i = 1; i < day; i++) q = Math.round(q * 1.6);
   return q;
