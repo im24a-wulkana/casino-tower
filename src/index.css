@@ -4028,9 +4028,127 @@ input { font-family: var(--font-mono); }
   cursor: not-allowed;
 }
 
+.ts-btn-preview {
+  background: linear-gradient(135deg, rgba(180,76,255,0.3), rgba(180,76,255,0.1));
+  color: #b44cff;
+  border: 1px solid rgba(180,76,255,0.5);
+}
+.ts-btn-preview:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(180,76,255,0.5), rgba(180,76,255,0.2));
+  box-shadow: 0 0 12px rgba(180,76,255,0.3);
+}
+
 @keyframes spinPulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.6; }
+}
+
+/* Machine preview modal */
+.ts-preview-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.ts-preview-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0;
+  width: 90vw;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.ts-preview-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 1px;
+  color: var(--gold);
+  flex-shrink: 0;
+}
+
+.ts-preview-header span:first-child {
+  font-size: 24px;
+}
+
+.ts-preview-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px 8px;
+  transition: color 0.2s;
+}
+.ts-preview-close:hover {
+  color: var(--text);
+}
+
+.ts-preview-items {
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.ts-preview-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--card);
+  border: 2px solid;
+  border-radius: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.ts-preview-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 0 16px rgba(0,0,0,0.3);
+}
+
+.ts-pi-emoji {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.ts-pi-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.ts-pi-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.ts-pi-rarity {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 /* Collection preview */

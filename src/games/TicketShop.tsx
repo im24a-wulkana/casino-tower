@@ -27,6 +27,7 @@ export function TicketShop() {
   const [results, setResults] = useState<Record<string, CollectibleDef | null>>({});
   const [reels, setReels] = useState<Record<string, CollectibleDef[]>>({});
   const [stopIndices, setStopIndices] = useState<Record<string, number>>({});
+  const [previewMachineId, setPreviewMachineId] = useState<string | null>(null);
 
   const reelRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const activeSpinsRef = useRef<Set<string>>(new Set());
@@ -219,6 +220,12 @@ export function TicketShop() {
                   >
                     {isSpinning ? 'SPINNING…' : 'SPIN'}
                   </button>
+                  <button
+                    className="ts-btn ts-btn-preview"
+                    onClick={() => setPreviewMachineId(machine.id)}
+                  >
+                    PREVIEW
+                  </button>
                 </div>
               </div>
             </div>
@@ -268,6 +275,34 @@ export function TicketShop() {
             <div className="ts-result-actions">
               <button className="btn-primary" onClick={reset}>SPIN AGAIN</button>
               <button className="btn-secondary" onClick={leave}>LEAVE</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Machine preview modal */}
+      {previewMachineId && (
+        <div className="ts-preview-backdrop" onClick={() => setPreviewMachineId(null)}>
+          <div className="ts-preview-modal" onClick={e => e.stopPropagation()}>
+            <div className="ts-preview-header">
+              <span>{MACHINES.find(m => m.id === previewMachineId)?.emoji}</span>
+              <span>{MACHINES.find(m => m.id === previewMachineId)?.name} — Possible Drops</span>
+              <button className="ts-preview-close" onClick={() => setPreviewMachineId(null)}>✕</button>
+            </div>
+            <div className="ts-preview-items">
+              {COLLECTIBLE_POOL.filter(c => c.machineIds.includes(previewMachineId))
+                .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
+                .map((item, i) => (
+                  <div key={i} className="ts-preview-item" style={{ borderColor: rarityColor(item.rarity) }}>
+                    <span className="ts-pi-emoji">{item.emoji}</span>
+                    <div className="ts-pi-info">
+                      <span className="ts-pi-name">{item.name}</span>
+                      <span className="ts-pi-rarity" style={{ color: rarityColor(item.rarity) }}>
+                        {rarityLabel(item.rarity)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
             </div>
           </div>
         </div>
