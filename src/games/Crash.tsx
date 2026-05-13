@@ -6,7 +6,7 @@ import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from
 function generateCrashPoint(): number {
   const r = Math.random();
   if (r < 0.01) return 1.0; // 1% instant crash
-  return Math.max(1.01, 0.99 / (1 - r));
+  return Math.max(1.01, 1.00 / (1 - r));
 }
 
 type Phase = 'betting' | 'live' | 'cashed' | 'crashed';

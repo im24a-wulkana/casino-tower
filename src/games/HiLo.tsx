@@ -10,7 +10,7 @@ const RANK_ORDER: Record<Rank, number> = {
   '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13,
 };
 const MAX_ROUNDS = 8;
-const MULT_PER = 1.29; // per-round factor 0.724*1.29+0.059 ≈ 0.993 -> 0.993^8 ≈ 94% RTP
+const MULT_PER = 1.38; // per-round factor: 0.724 * 1.38 ≈ 1.00 → ~100% RTP per round
 
 type Phase = 'betting' | 'playing' | 'result';
 

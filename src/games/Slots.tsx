@@ -24,7 +24,7 @@ function calcResult(reels: string[], bet: number): { label: string; mult: number
     const mult = a === '7' ? 10 : 5;
     return { label: `3 × ${a}`, mult };
   }
-  if (a === b || b === c || a === c) return { label: '2 of a Kind', mult: 1.2 };
+  if (a === b || b === c || a === c) return { label: '2 of a Kind', mult: 1.5 };
   return { label: 'No Match', mult: 0 };
 }
 

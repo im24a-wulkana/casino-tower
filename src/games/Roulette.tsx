@@ -45,10 +45,10 @@ export function Roulette() {
   const spin = () => {
     updateBank(-bet);
     setPhase('spinning');
-    const final = Math.floor(Math.random() * 37);
+    const final = Math.floor(Math.random() * 36) + 1;
     let tick = 0;
     timerRef.current = setInterval(() => {
-      setDisplay(Math.floor(Math.random() * 37));
+      setDisplay(Math.floor(Math.random() * 36) + 1);
       if (++tick >= 28) {
         clearInterval(timerRef.current!);
         setDisplay(final);

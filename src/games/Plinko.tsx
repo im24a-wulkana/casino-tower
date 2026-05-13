@@ -12,27 +12,24 @@ const SLOTS = ROWS + 1; // 9
 const RISK_CONFIG = {
   LOW: {
     label: 'LOW',
-    // EV ≈ 0.0039*2.1*2 + 0.0313*1.4*2 + 0.109*1.0*2 + 0.219*0.7*2 + 0.273*0.4
-    //     = 0.016 + 0.088 + 0.218 + 0.307 + 0.109 = 0.738 → ~91% RTP
-    mults:  [2.1, 1.4, 1.0, 0.7, 0.4, 0.7, 1.0, 1.4, 2.1],
+    // EV ≈ sum of C(8,k)/256 * mult[k] ≈ 1.00
+    mults:  [5.6, 2.1, 1.1, 0.7, 0.5, 0.7, 1.1, 2.1, 5.6],
     colors: ['#c9a84c','#2dc653','#3a9a3a','#4caaff','#888','#4caaff','#3a9a3a','#2dc653','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.0,
   },
   MEDIUM: {
     label: 'MEDIUM',
-    // EV ≈ 0.0039*14*2 + 0.031*3*2 + 0.109*1.2*2 + 0.219*0.3*2 + 0.273*0
-    //     = 0.109 + 0.186 + 0.262 + 0.131 + 0 = 0.688 → ~91% RTP
-    mults:  [14, 3, 1.2, 0.3, 0, 0.3, 1.2, 3, 14],
+    // Higher variance, still ~100% RTP
+    mults:  [22, 5, 1.5, 0.3, 0, 0.3, 1.5, 5, 22],
     colors: ['#c9a84c','#4caaff','#888','#b44c00','#7a1a1a','#b44c00','#888','#4caaff','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.0,
   },
   HIGH: {
     label: 'HIGH',
-    // EV ≈ 0.0039*70*2 + 0.031*1.5*2 + rest 0
-    //     = 0.546 + 0.093 = 0.639 → ~90% RTP (high variance mode, house edge is largest)
-    mults:  [70, 1.5, 0, 0, 0, 0, 0, 1.5, 70],
+    // Extreme variance, ~100% RTP, most slots are 0
+    mults:  [110, 2.0, 0, 0, 0, 0, 0, 2.0, 110],
     colors: ['#c9a84c','#8a3a00','#4a0000','#4a0000','#4a0000','#4a0000','#4a0000','#8a3a00','#c9a84c'],
     bias: 0,
     edgeHitRadius: 1.0,

@@ -15,7 +15,7 @@ export interface CollectibleDef {
 
 export const COLLECTIBLE_POOL: CollectibleDef[] = [
   // ── BASIC machine drops (common-heavy) ───────────────────────────────────
-  { id: 'lucky_chip',      name: 'Lucky Chip',       emoji: '🪙', rarity: 'common',    weight: 25, machineIds: ['basic', 'premium', 'elite'] },
+  { id: 'lucky_chip',      name: 'Lucky Chip',       emoji: '🪙', rarity: 'common',    weight: 25, machineIds: ['basic', 'premium'] },
   { id: 'card_ace',        name: 'Ace of Spades',    emoji: '🂡', rarity: 'common',    weight: 22, machineIds: ['basic', 'premium'] },
   { id: 'dice_pair',       name: 'Snake Eyes',       emoji: '🎲', rarity: 'common',    weight: 20, machineIds: ['basic', 'premium'] },
   { id: 'cocktail',        name: 'Casino Cocktail',  emoji: '🍸', rarity: 'common',    weight: 18, machineIds: ['basic'] },

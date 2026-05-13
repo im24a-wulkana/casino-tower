@@ -188,6 +188,18 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
       };
     }
 
+    case 'CLAIM_DAILY_REWARD': {
+      // Only allow claiming once per day
+      if (state.lastDailyRewardDay === state.day) return state;
+      // Day 7 reward: 100T ticket for elite machine; all other days: 1T tickets (one for each machine)
+      const ticketsToAdd = state.day === 7 ? 100_000_000_000_000 : 3_000_000_000_000;
+      return {
+        ...state,
+        tickets: state.tickets + ticketsToAdd,
+        lastDailyRewardDay: state.day,
+      };
+    }
+
     default:
       return state;
   }
@@ -210,6 +222,7 @@ interface GameContextValue {
   buyTicket: (cost: number, machineId: string) => void;
   rollCollectible: (c: import('../types').Collectible) => void;
   newRun: () => void;
+  claimDailyReward: () => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -283,6 +296,7 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     buyTicket: useCallback((cost, machineId) => dispatch({ type: 'BUY_TICKET', cost, machineId }), []),
     rollCollectible: useCallback((c) => dispatch({ type: 'ROLL_COLLECTIBLE', collectible: c }), []),
     newRun: useCallback(() => dispatch({ type: 'NEW_RUN' }), []),
+    claimDailyReward: useCallback(() => dispatch({ type: 'CLAIM_DAILY_REWARD' }), []),
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;

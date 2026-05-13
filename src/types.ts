@@ -42,6 +42,7 @@ export interface GameState {
   // Persist across resets
   winCount: number;          // how many times player has cleared floor 5
   incomeMultiplier: number;  // 1.2^winCount — applied to all bank gains
+  lastDailyRewardDay: number; // track which day player last claimed daily reward
 }
 
 export type GameAction =
@@ -59,4 +60,5 @@ export type GameAction =
   | { type: 'SET_FLOOR'; floor: number }
   | { type: 'LOAD_STATE'; state: GameState }
   | { type: 'BUY_TICKET'; cost: number; machineId: string }
-  | { type: 'ROLL_COLLECTIBLE'; collectible: Collectible };
+  | { type: 'ROLL_COLLECTIBLE'; collectible: Collectible }
+  | { type: 'CLAIM_DAILY_REWARD' }; // claim daily reward tickets

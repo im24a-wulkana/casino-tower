@@ -3834,6 +3834,35 @@ input { font-family: var(--font-mono); }
   gap: 32px;
 }
 
+.ts-daily-reward-section {
+  display: flex;
+  justify-content: center;
+  margin: 16px 0 24px 0;
+}
+
+.ts-daily-reward-btn {
+  padding: 12px 24px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  border: 2px solid #ffe066;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255,224,102,0.15), rgba(255,224,102,0.05));
+  color: #ffe066;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ts-daily-reward-btn:not(:disabled):hover {
+  background: linear-gradient(135deg, rgba(255,224,102,0.3), rgba(255,224,102,0.1));
+  box-shadow: 0 0 16px rgba(255,224,102,0.4);
+  transform: translateY(-2px);
+}
+.ts-daily-reward-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .ts-machines-container {
   display: flex;
   justify-content: center;
@@ -3863,6 +3892,7 @@ input { font-family: var(--font-mono); }
   gap: 14px;
   transition: transform 0.2s, box-shadow 0.2s;
   overflow: hidden;
+  position: relative;
 }
 .ts-vending-machine:hover {
   transform: translateY(-4px);
@@ -3870,6 +3900,29 @@ input { font-family: var(--font-mono); }
     0 12px 32px rgba(0,0,0,0.4),
     inset 0 1px 0 rgba(255,255,255,0.15),
     0 0 24px rgba(0,0,0,0.3);
+}
+
+.ts-vm-preview-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1.5px solid currentColor;
+  border-radius: 6px;
+  background: rgba(0,0,0,0.3);
+  color: var(--machine-color);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.ts-vm-preview-btn:hover {
+  background: rgba(255,255,255,0.1);
+  transform: scale(1.1);
 }
 
 .ts-vm-header {
@@ -4173,11 +4226,26 @@ input { font-family: var(--font-mono); }
   color: var(--text);
 }
 
+.ts-pi-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
 .ts-pi-rarity {
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+}
+
+.ts-pi-percent {
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+  min-width: 40px;
+  text-align: right;
 }
 
 /* Collection preview */

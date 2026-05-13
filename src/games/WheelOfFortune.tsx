@@ -9,20 +9,21 @@ interface Segment { label: string; mult: number; color: string; }
 // LOSE×6, 0.9×4, 1.3×2, 2×1, 5×1
 const SEGMENTS: Segment[] = [
   { label: 'LOSE', mult: 0,   color: '#7f1d1d' },
-  { label: '0.9×', mult: 0.9, color: '#1a3a1a' },
+  { label: '1×',   mult: 1,   color: '#1a3a1a' },
   { label: '1.3×', mult: 1.3, color: '#1a2a4a' },
   { label: 'LOSE', mult: 0,   color: '#7f1d1d' },
   { label: '0.9×', mult: 0.9, color: '#1a3a1a' },
   { label: '2×',   mult: 2,   color: '#4a2a1a' },
   { label: 'LOSE', mult: 0,   color: '#7f1d1d' },
   { label: '5×',   mult: 5,   color: '#4a1a4a' },
-  { label: '0.9×', mult: 0.9, color: '#1a3a1a' },
+  { label: '1×',   mult: 1,   color: '#1a3a1a' },
   { label: 'LOSE', mult: 0,   color: '#7f1d1d' },
   { label: '1.3×', mult: 1.3, color: '#1a2a4a' },
   { label: '0.9×', mult: 0.9, color: '#1a3a1a' },
   { label: 'LOSE', mult: 0,   color: '#7f1d1d' },
   { label: 'LOSE', mult: 0,   color: '#7f1d1d' },
 ];
+// EV = (1+1.3+0.9+2+5+1+1.3+0.9)/14 ≈ 13.4/14 ≈ 95.7% → close to fair
 const N = SEGMENTS.length;
 const DEG_PER = 360 / N;
 

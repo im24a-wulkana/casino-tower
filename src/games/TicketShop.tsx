@@ -144,9 +144,22 @@ export function TicketShop() {
   const rarityLabel = (r: Collectible['rarity']) =>
     r.charAt(0).toUpperCase() + r.slice(1);
 
+  const { claimDailyReward } = useGame();
+
   return (
     <div className="game-view ts-wrap">
       <GameHeader title="TICKET SHOP" bank={gs.bank} onLeave={leave} />
+
+      {/* Daily Reward Button */}
+      <div className="ts-daily-reward-section">
+        <button
+          className="ts-daily-reward-btn"
+          disabled={gs.lastDailyRewardDay === gs.day}
+          onClick={claimDailyReward}
+        >
+          {gs.lastDailyRewardDay === gs.day ? '✓ CLAIMED TODAY' : `📅 CLAIM DAILY REWARD — DAY ${gs.day}`}
+        </button>
+      </div>
 
       {/* 3 Vending Machines */}
       <div className="ts-machines-container">
@@ -161,6 +174,15 @@ export function TicketShop() {
             <div key={machine.id} className="ts-machine-wrapper" style={{ '--machine-color': machine.color } as React.CSSProperties}>
               {/* Vending Machine Body */}
               <div className="ts-vending-machine">
+                {/* Preview button in top-right */}
+                <button
+                  className="ts-vm-preview-btn"
+                  onClick={() => setPreviewMachineId(machine.id)}
+                  style={{ color: machine.color, borderColor: machine.color }}
+                >
+                  👁
+                </button>
+
                 {/* Header with name and emoji */}
                 <div className="ts-vm-header">
                   <span className="ts-vm-emoji">{machine.emoji}</span>
@@ -220,12 +242,6 @@ export function TicketShop() {
                   >
                     {isSpinning ? 'SPINNING…' : 'SPIN'}
                   </button>
-                  <button
-                    className="ts-btn ts-btn-preview"
-                    onClick={() => setPreviewMachineId(machine.id)}
-                  >
-                    PREVIEW
-                  </button>
                 </div>
               </div>
             </div>
@@ -236,7 +252,9 @@ export function TicketShop() {
       {/* Collection preview - only show when idle */}
       {phase === 'idle' && (
         <div className="ts-collection-preview">
-          <div className="ts-cp-title">YOUR COLLECTION ({(gs.collectibles ?? []).length})</div>
+          <div className="ts-cp-header">
+            <div className="ts-cp-title">YOUR COLLECTION ({(gs.collectibles ?? []).length})</div>
+          </div>
           <div className="ts-cp-grid">
             {[...(gs.collectibles ?? [])]
               .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
@@ -290,19 +308,29 @@ export function TicketShop() {
               <button className="ts-preview-close" onClick={() => setPreviewMachineId(null)}>✕</button>
             </div>
             <div className="ts-preview-items">
-              {COLLECTIBLE_POOL.filter(c => c.machineIds.includes(previewMachineId))
-                .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
-                .map((item, i) => (
-                  <div key={i} className="ts-preview-item" style={{ borderColor: rarityColor(item.rarity) }}>
-                    <span className="ts-pi-emoji">{item.emoji}</span>
-                    <div className="ts-pi-info">
-                      <span className="ts-pi-name">{item.name}</span>
-                      <span className="ts-pi-rarity" style={{ color: rarityColor(item.rarity) }}>
-                        {rarityLabel(item.rarity)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+              {(() => {
+                const pool = COLLECTIBLE_POOL.filter(c => c.machineIds.includes(previewMachineId));
+                const totalWeight = pool.reduce((s, c) => s + c.weight, 0);
+                return pool
+                  .sort((a, b) => RARITY_ORDER[b.rarity] - RARITY_ORDER[a.rarity])
+                  .map((item, i) => {
+                    const percent = ((item.weight / totalWeight) * 100).toFixed(2);
+                    return (
+                      <div key={i} className="ts-preview-item" style={{ borderColor: rarityColor(item.rarity) }}>
+                        <span className="ts-pi-emoji">{item.emoji}</span>
+                        <div className="ts-pi-info">
+                          <span className="ts-pi-name">{item.name}</span>
+                          <div className="ts-pi-details">
+                            <span className="ts-pi-rarity" style={{ color: rarityColor(item.rarity) }}>
+                              {rarityLabel(item.rarity)}
+                            </span>
+                            <span className="ts-pi-percent">{percent}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  });
+              })()}
             </div>
           </div>
         </div>

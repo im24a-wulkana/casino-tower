@@ -108,6 +108,7 @@ export function createInitialState(overrides?: Partial<GameState>): GameState {
     availableGames: getAvailableGames(floor, day * 137 + 42),
     winCount: overrides?.winCount ?? 0,
     incomeMultiplier: overrides?.incomeMultiplier ?? 1,
+    lastDailyRewardDay: overrides?.lastDailyRewardDay ?? 0,
   };
 }
 
