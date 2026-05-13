@@ -62,27 +62,9 @@ function Casino() {
   const { logout, username } = useAuth();
 
   try {
-    // Get game from URL or state
-    const urlPath = window.location.pathname;
-    const gameIdFromUrl = urlPath.split('/').pop();
-    const isValidGameUrl = gameIdFromUrl && gameIdFromUrl !== '' && Object.keys(GAME_COMPONENTS).includes(gameIdFromUrl);
-    const activeGameId = isValidGameUrl ? gameIdFromUrl : state.activeGame;
+    const activeGameId = state.activeGame;
     const ActiveGame = activeGameId ? GAME_COMPONENTS[activeGameId] : null;
 
-    // Sync URL with state when activeGame changes
-    useEffect(() => {
-      try {
-        const currentPath = window.location.pathname;
-        const expectedPath = state.activeGame ? `/${state.activeGame}` : '/';
-        if (currentPath !== expectedPath) {
-          window.history.replaceState(null, '', expectedPath);
-        }
-      } catch (err) {
-        console.error('Failed to update URL:', err);
-      }
-    }, [state.activeGame]);
-
-    // When setting active game from grid, update URL
     const handleSetActiveGame = (gameId: string) => {
       try {
         setActiveGame(gameId);
