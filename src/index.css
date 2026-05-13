@@ -4156,3 +4156,367 @@ input { font-family: var(--font-mono); }
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* ─── Responsive Design ─────────────────────────────────────────────────────── */
+
+/* Tablets and small desktops */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 160px;
+    padding: 16px 12px;
+    gap: 16px;
+  }
+
+  .topbar-title {
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+
+  .topbar-day-num {
+    font-size: 18px;
+  }
+
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+
+  .game-card {
+    padding: 16px;
+    min-height: 140px;
+  }
+
+  .game-card-name {
+    font-size: 18px;
+  }
+
+  .main-content {
+    padding: 16px;
+  }
+}
+
+/* Mobile devices */
+@media (max-width: 768px) {
+  .app {
+    height: 100vh;
+  }
+
+  /* Hide sidebar on mobile, show as overlay */
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 180px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    flex-direction: row;
+    padding: 12px 16px;
+    gap: 24px;
+    overflow-x: auto;
+    flex-shrink: 0;
+  }
+
+  .sidebar-section {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .sidebar-label {
+    font-size: 9px;
+  }
+
+  .sidebar-bank {
+    font-size: 20px;
+  }
+
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .topbar-brand {
+    width: 100%;
+    gap: 8px;
+  }
+
+  .topbar-title {
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
+  .topbar-day-num {
+    font-size: 16px;
+  }
+
+  .topbar-day-label {
+    font-size: 11px;
+  }
+
+  .topbar-floor {
+    font-size: 11px;
+  }
+
+  .main-content {
+    padding: 12px;
+    flex: 1;
+  }
+
+  .game-grid-wrap {
+    gap: 12px;
+  }
+
+  .game-grid-title {
+    font-size: 20px;
+    letter-spacing: 2px;
+  }
+
+  .game-grid-sub {
+    font-size: 12px;
+  }
+
+  .game-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .game-card {
+    padding: 12px;
+    min-height: 120px;
+    gap: 4px;
+  }
+
+  .game-card-name {
+    font-size: 14px;
+  }
+
+  .game-card-desc {
+    font-size: 11px;
+  }
+
+  .game-card-play,
+  .game-card-soon {
+    font-size: 11px;
+  }
+
+  /* Vending machines responsive */
+  .ts-machines-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ts-machine-wrapper {
+    width: 100%;
+  }
+
+  .ts-vending-machine {
+    width: 100%;
+  }
+
+  .ts-vm-window {
+    height: 120px;
+  }
+
+  .ts-vm-reel-item {
+    height: 120px;
+  }
+
+  .ts-result-overlay {
+    width: 90vw;
+    max-width: 400px;
+  }
+
+  /* Collection modal responsive */
+  .collection-modal {
+    width: 90vw;
+    max-width: none;
+    max-height: 80vh;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  .collection-card {
+    padding: 12px;
+  }
+
+  /* Case battle responsive */
+  .cb-arena {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .cb-arena-players {
+    grid-template-columns: 1fr;
+  }
+
+  .cb-case-chips {
+    flex-wrap: wrap;
+  }
+
+  .cb-case-chip {
+    width: auto;
+    flex: 0 1 calc(50% - 6px);
+  }
+
+  .cb-case-picker {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  }
+
+  /* Case opening responsive */
+  .co-case-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .co-case-card {
+    padding: 12px;
+  }
+
+  /* Game-specific responsive adjustments */
+  .plinko-container {
+    padding: 12px;
+  }
+
+  .slots-container {
+    flex-direction: column;
+  }
+
+  .slots-reels {
+    width: 100%;
+  }
+
+  .slots-reel {
+    width: 60px;
+    height: 100px;
+  }
+
+  .game-view {
+    padding: 12px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+  .topbar {
+    padding: 8px 12px;
+  }
+
+  .topbar-title {
+    font-size: 14px;
+  }
+
+  .topbar-brand {
+    gap: 4px;
+  }
+
+  .sidebar {
+    padding: 8px 12px;
+    gap: 16px;
+  }
+
+  .sidebar-bank {
+    font-size: 18px;
+  }
+
+  .main-content {
+    padding: 8px;
+  }
+
+  .game-grid-title {
+    font-size: 18px;
+  }
+
+  .game-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .game-card {
+    padding: 10px;
+    min-height: 100px;
+    gap: 3px;
+  }
+
+  .game-card-name {
+    font-size: 12px;
+  }
+
+  .game-card-desc {
+    font-size: 10px;
+    display: none;
+  }
+
+  .game-card-floor {
+    font-size: 8px;
+  }
+
+  button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  input {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+
+  .betting-panel {
+    padding: 12px;
+  }
+
+  .game-header-title {
+    font-size: 16px;
+  }
+
+  /* Modals on small phones */
+  .case-modal,
+  .collection-modal,
+  .ts-result-overlay {
+    width: 95vw;
+    max-width: none;
+  }
+
+  .case-modal-items {
+    max-height: 50vh;
+  }
+
+  .collection-modal {
+    grid-template-columns: repeat(2, 1fr);
+    max-height: 60vh;
+  }
+
+  /* Touch-friendly spacing */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Extra small phones (under 360px) */
+@media (max-width: 360px) {
+  .topbar {
+    flex-direction: column;
+    height: auto;
+    padding: 8px;
+  }
+
+  .topbar-brand {
+    width: 100%;
+  }
+
+  .game-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    flex-direction: column;
+    max-height: none;
+  }
+
+  .sidebar-section {
+    flex-direction: row;
+  }
+}
+
