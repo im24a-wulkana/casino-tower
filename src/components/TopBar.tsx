@@ -9,14 +9,25 @@ interface TopBarProps {
 }
 
 export function TopBar({ onLogout, username, isDev, onPause }: TopBarProps) {
-  const { state, curseUser } = useGame();
+  const { state, curseUser, uncurseUser } = useGame();
   const [curseInput, setCurseInput] = useState('');
+  const [curseDuration, setCurseDuration] = useState('5'); // minutes, "0" for permanent
   const [showCursePanel, setShowCursePanel] = useState(false);
   const floorLabel = ['', 'LOBBY', 'MEZZANINE', 'HIGH STAKES', 'PENTHOUSE', 'LEGEND'][state.floor];
 
   const handleCurseUser = () => {
     if (curseInput.trim()) {
-      curseUser(curseInput.trim());
+      const minutes = parseInt(curseDuration) || 0;
+      const durationMs = minutes === 0 ? 0 : minutes * 60 * 1000;
+      curseUser(curseInput.trim(), durationMs);
+      setCurseInput('');
+      setShowCursePanel(false);
+    }
+  };
+
+  const handleUncurseUser = () => {
+    if (curseInput.trim()) {
+      uncurseUser(curseInput.trim());
       setCurseInput('');
       setShowCursePanel(false);
     }
@@ -55,13 +66,22 @@ export function TopBar({ onLogout, username, isDev, onPause }: TopBarProps) {
         <div className="topbar-curse-panel">
           <input
             type="text"
-            placeholder="Username to curse..."
+            placeholder="Username..."
             value={curseInput}
             onChange={e => setCurseInput(e.target.value)}
             onKeyPress={e => e.key === 'Enter' && handleCurseUser()}
             autoFocus
           />
-          <button onClick={handleCurseUser}>CURSE</button>
+          <input
+            type="number"
+            placeholder="Minutes (0=permanent)"
+            min="0"
+            value={curseDuration}
+            onChange={e => setCurseDuration(e.target.value)}
+            style={{ width: '80px' }}
+          />
+          <button onClick={handleCurseUser} title="Curse user with bad luck">CURSE</button>
+          <button onClick={handleUncurseUser} title="Remove curse">UNCURSE</button>
           <button onClick={() => setShowCursePanel(false)}>CANCEL</button>
         </div>
       )}

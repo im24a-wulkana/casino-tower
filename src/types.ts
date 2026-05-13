@@ -43,7 +43,7 @@ export interface GameState {
   winCount: number;          // how many times player has cleared floor 5
   incomeMultiplier: number;  // 1.2^winCount — applied to all bank gains
   lastDailyRewardDay: number; // track which day player last claimed daily reward
-  cursedUsers: string[];     // dev only: users with bad luck (5x loss multiplier)
+  cursedUsers: Record<string, number>; // dev only: username -> expiration timestamp (0 = permanent)
 }
 
 export type GameAction =
@@ -63,4 +63,5 @@ export type GameAction =
   | { type: 'BUY_TICKET'; cost: number; machineId: string }
   | { type: 'ROLL_COLLECTIBLE'; collectible: Collectible }
   | { type: 'CLAIM_DAILY_REWARD' } // claim daily reward tickets
-  | { type: 'CURSE_USER'; username: string }; // dev only: curse a user with bad luck
+  | { type: 'CURSE_USER'; username: string; duration?: number } // dev only: curse a user (duration in ms, 0=permanent)
+  | { type: 'UNCURSE_USER'; username: string }; // dev only: remove curse from a user

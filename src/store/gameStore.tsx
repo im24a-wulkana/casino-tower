@@ -36,12 +36,17 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
       // Apply income multiplier to positive gains only
       const mult = state.incomeMultiplier ?? 1;
       let delta = action.delta > 0 ? action.delta * mult : action.delta;
-      // If cursed, reverse winnings and multiply losses by 5x
-      const isCursed = (state.cursedUsers ?? []).length > 0;
+      // Clean up expired curses and check if currently cursed
+      const now = Date.now();
+      const cleanedCurses: Record<string, number> = {};
+      Object.entries(state.cursedUsers ?? {}).forEach(([user, expiration]) => {
+        if (expiration > now) cleanedCurses[user] = expiration;
+      });
+      const isCursed = Object.keys(cleanedCurses).length > 0;
       if (isCursed && delta > 0) delta = -delta;      // reverse wins
       if (isCursed && delta < 0) delta = delta * 5;   // 5x losses
       const newBank = Math.max(0, state.bank + delta);
-      return { ...state, bank: newBank };
+      return { ...state, bank: newBank, cursedUsers: cleanedCurses };
     }
 
     case 'DECLARE_BANKRUPTCY':
@@ -208,12 +213,20 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
 
     case 'CURSE_USER': {
       // Dev only: curse a user (5x loss, reverse wins)
-      const cursedList = state.cursedUsers ?? [];
-      if (cursedList.includes(action.username)) return state; // already cursed
+      // duration: 0 = permanent, else ms from now
+      const cursedMap = state.cursedUsers ?? {};
+      const expiration = action.duration === 0 ? 0 : Date.now() + (action.duration ?? 5 * 60 * 1000);
       return {
         ...state,
-        cursedUsers: [...cursedList, action.username],
+        cursedUsers: { ...cursedMap, [action.username]: expiration },
       };
+    }
+
+    case 'UNCURSE_USER': {
+      // Dev only: remove curse from a user
+      const cursedMap = state.cursedUsers ?? {};
+      const { [action.username]: _, ...rest } = cursedMap;
+      return { ...state, cursedUsers: rest };
     }
 
     default:
@@ -239,7 +252,8 @@ interface GameContextValue {
   rollCollectible: (c: import('../types').Collectible) => void;
   newRun: () => void;
   claimDailyReward: () => void;
-  curseUser: (username: string) => void;
+  curseUser: (username: string, duration?: number) => void;
+  uncurseUser: (username: string) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -314,7 +328,8 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     rollCollectible: useCallback((c) => dispatch({ type: 'ROLL_COLLECTIBLE', collectible: c }), []),
     newRun: useCallback(() => dispatch({ type: 'NEW_RUN' }), []),
     claimDailyReward: useCallback(() => dispatch({ type: 'CLAIM_DAILY_REWARD' }), []),
-    curseUser: useCallback((username) => dispatch({ type: 'CURSE_USER', username }), []),
+    curseUser: useCallback((username, duration) => dispatch({ type: 'CURSE_USER', username, duration }), []),
+    uncurseUser: useCallback((username) => dispatch({ type: 'UNCURSE_USER', username }), []),
   };
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
