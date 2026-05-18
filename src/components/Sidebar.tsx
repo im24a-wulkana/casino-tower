@@ -194,7 +194,7 @@ export function Sidebar() {
 
       {isLastDay && (
         <button className="btn-end-day btn-ascend" onClick={ascend}>
-          🔥 ASCEND (×{(Math.pow(1.2, (state.winCount ?? 0) + 1)).toFixed(2)} income)
+          🔥 ASCEND (×{(1 + Math.log10((state.bank ?? 1) / 1_000_000) * 0.1).toFixed(2)} income)
         </button>
       )}
 

@@ -107,6 +107,7 @@ export function PenguinCross() {
   };
 
   const crossLane = () => {
+    if (pen.result !== null) return;
     const nextLane = pen.lane + 1;
 
     if (Math.random() < HIT_CHANCE) {
@@ -151,7 +152,7 @@ export function PenguinCross() {
   };
 
   const cashOut = () => {
-    if (pen.lane === 0) return;
+    if (pen.result !== null || pen.lane === 0) return;
     const returned = Math.round(pen.bet * pen.multiplier);
     updateBank(returned);
     const cashNet = returned - pen.bet;

@@ -1803,7 +1803,14 @@ input { font-family: var(--font-mono); }
   flex-shrink: 0;
 }
 
-.hilo-card-face { /* inherits .playing-card .card-face */ }
+.hilo-card-face {
+  background: #fefefe;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
 
 .hilo-card-back {
   background: linear-gradient(135deg, #1a3a6e 25%, #142d57 25%, #142d57 50%, #1a3a6e 50%, #1a3a6e 75%, #142d57 75%);
