@@ -52,7 +52,6 @@ export type GameAction =
   | { type: 'TICK_TIMER' }
   | { type: 'END_DAY_MANUAL' }
   | { type: 'START_NEXT_DAY' }
-  | { type: 'ASCEND' }              // on day 15: bump multiplier, reset to day 1
   | { type: 'RESET_GAME' }          // fresh start (game-over / new-game button)
   | { type: 'NEW_RUN' }             // after victory: preserve collectibles + bump multiplier
   | { type: 'PAUSE' }               // pause game
