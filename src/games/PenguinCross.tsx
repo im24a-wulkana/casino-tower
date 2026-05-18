@@ -319,11 +319,11 @@ export function PenguinCross() {
         <div className="penguin-controls">
           <div className="craps-bet-show">BET: <span className="mono gold">{formatMoney(pen.bet)}</span></div>
           <div className="bj-action-row">
-            <button className="btn-action" onClick={crossLane}>
+            <button className="btn-action" onClick={crossLane} disabled={pen.result !== null}>
               CROSS LANE {pen.lane + 1}
             </button>
             {pen.lane > 0 && (
-              <button className="btn-action" onClick={cashOut}>
+              <button className="btn-action" onClick={cashOut} disabled={pen.result !== null}>
                 CASH OUT ({formatMoney(Math.round(pen.bet * pen.multiplier))})
               </button>
             )}
