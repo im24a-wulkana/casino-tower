@@ -144,8 +144,6 @@ export function TicketShop() {
   const rarityLabel = (r: Collectible['rarity']) =>
     r.charAt(0).toUpperCase() + r.slice(1);
 
-  const { claimDailyReward } = useGame();
-
   return (
     <div className="game-view ts-wrap">
       <GameHeader title="TICKET SHOP" bank={gs.bank} onLeave={leave} />

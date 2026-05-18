@@ -233,9 +233,15 @@ html, body {
 body {
   background-color: var(--bg);
   background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(201,168,76,0.04) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(230,57,70,0.04) 0%, transparent 50%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Ccircle cx='1' cy='1' r='0.6' fill='rgba(255,255,255,0.025)'/%3E%3C/svg%3E");
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,207,255,0.012) 2px,
+      rgba(0,207,255,0.012) 4px
+    ),
+    radial-gradient(ellipse at 20% 50%, rgba(0,207,255,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(191,0,255,0.04) 0%, transparent 50%);
   color: var(--text);
   font-family: var(--font-body);
   font-size: 14px;
@@ -282,7 +288,8 @@ input { font-family: var(--font-mono); }
   padding: 0 24px;
   height: 52px;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(0,207,255,0.2);
+  box-shadow: 0 1px 0 rgba(0,207,255,0.1), 0 4px 20px rgba(0,0,0,0.5);
   flex-shrink: 0;
 }
 
@@ -295,9 +302,9 @@ input { font-family: var(--font-mono); }
 .topbar-title {
   font-family: var(--font-display);
   font-size: 24px;
-  letter-spacing: 3px;
+  letter-spacing: 4px;
   color: var(--gold);
-  text-shadow: 0 0 20px rgba(201,168,76,0.4);
+  text-shadow: var(--neon-gold);
 }
 
 .topbar-divider {
@@ -337,8 +344,8 @@ input { font-family: var(--font-mono); }
 .sidebar {
   width: 220px;
   flex-shrink: 0;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+  border-right: 1px solid rgba(0,207,255,0.15);
   padding: 20px 16px;
   display: flex;
   flex-direction: column;
@@ -355,16 +362,17 @@ input { font-family: var(--font-mono); }
 .sidebar-label {
   font-family: var(--font-display);
   font-size: 10px;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   color: var(--text-dim);
+  text-transform: uppercase;
 }
 
 .sidebar-bank {
   font-family: var(--font-mono);
-  font-size: 26px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--gold);
-  text-shadow: 0 0 12px rgba(201,168,76,0.3);
+  text-shadow: var(--neon-gold);
 }
 
 .sidebar-quota {
@@ -377,12 +385,12 @@ input { font-family: var(--font-mono); }
 
 .sidebar-quota.quota-hit {
   color: var(--green);
-  text-shadow: 0 0 10px rgba(45,198,83,0.4);
+  text-shadow: var(--neon-green);
 }
 
 .quota-bar-wrap {
   height: 4px;
-  background: var(--border);
+  background: var(--card2);
   border-radius: 2px;
   overflow: hidden;
   margin-top: 4px;
@@ -390,13 +398,15 @@ input { font-family: var(--font-mono); }
 
 .quota-bar-fill {
   height: 100%;
-  background: var(--gold);
+  background: linear-gradient(90deg, var(--blue), var(--green));
+  box-shadow: 0 0 6px rgba(0,255,136,0.5);
   border-radius: 2px;
-  transition: width 0.3s ease;
+  transition: width 0.4s ease;
 }
 
 .quota-bar-fill.quota-bar-done {
-  background: var(--green);
+  background: linear-gradient(90deg, #00ff88, #ffe566);
+  box-shadow: 0 0 10px rgba(0,255,136,0.6);
 }
 
 .quota-pct {
@@ -526,18 +536,25 @@ input { font-family: var(--font-mono); }
   padding: 20px;
   text-align: left;
   overflow: hidden;
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
   min-height: 160px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.game-card-available:hover {
+.game-card:hover {
+  border-color: var(--floor-accent, var(--blue));
+  box-shadow: 0 0 16px rgba(0,207,255,0.2), 0 0 2px rgba(0,207,255,0.4);
   transform: translateY(-2px);
-  border-color: var(--accent, var(--gold));
-  box-shadow: 0 0 24px color-mix(in srgb, var(--accent, var(--gold)) 25%, transparent),
-              0 4px 20px rgba(0,0,0,0.4);
+}
+
+.game-card-available::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,207,255,0.03) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .game-card-locked {
@@ -707,31 +724,36 @@ input { font-family: var(--font-mono); }
 
 .btn-primary {
   padding: 13px 28px;
-  background: var(--gold);
-  color: #0a0a0a;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
   border-radius: var(--radius);
   font-family: var(--font-display);
   font-size: 15px;
   letter-spacing: 2px;
   font-weight: 700;
+  box-shadow: var(--neon-gold);
   transition: all 0.2s;
   align-self: stretch;
   text-align: center;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #e0bc5a;
-  box-shadow: 0 0 20px rgba(201,168,76,0.4);
-  transform: translateY(-1px);
+  background: rgba(255,229,102,0.1);
+  box-shadow: 0 0 20px rgba(255,229,102,0.4), 0 0 4px rgba(255,229,102,0.8);
 }
 
-.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary:disabled {
+  opacity: 0.3;
+  box-shadow: none;
+  cursor: not-allowed;
+}
 
 .btn-secondary {
   padding: 13px 28px;
-  background: var(--card2);
-  color: var(--text-dim);
+  background: transparent;
   border: 1px solid var(--border);
+  color: var(--text-dim);
   border-radius: var(--radius);
   font-family: var(--font-display);
   font-size: 15px;
@@ -739,15 +761,21 @@ input { font-family: var(--font-mono); }
   transition: all 0.2s;
 }
 
-.btn-secondary:hover { background: var(--card); color: var(--text); }
+.btn-secondary:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  box-shadow: var(--neon-blue);
+}
 
 .btn-danger {
-  background: var(--red);
-  color: #fff;
+  background: transparent;
+  border-color: var(--red);
+  color: var(--red);
+  box-shadow: var(--neon-red);
 }
 .btn-danger:hover:not(:disabled) {
-  background: #ff4d5a;
-  box-shadow: 0 0 20px rgba(230,57,70,0.4);
+  background: rgba(255,34,68,0.1);
+  box-shadow: 0 0 20px rgba(255,34,68,0.4), 0 0 4px rgba(255,34,68,0.8);
 }
 
 .btn-limo { margin-top: 4px; }
@@ -904,17 +932,19 @@ input { font-family: var(--font-mono); }
 }
 
 .card-face {
-  background: #fefefe;
-  border: 1px solid #ddd;
+  background: #0e0e18;
+  border: 1px solid rgba(0,207,255,0.25);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .card-back {
-  background: linear-gradient(135deg, #1a3a6e 25%, #142d57 25%, #142d57 50%, #1a3a6e 50%, #1a3a6e 75%, #142d57 75%);
+  background: linear-gradient(135deg, #0a0a1a 25%, #060612 25%, #060612 50%, #0a0a1a 50%, #0a0a1a 75%, #060612 75%);
   background-size: 10px 10px;
-  border: 2px solid #c9a84c;
+  border: 1px solid rgba(255,229,102,0.4);
+  box-shadow: 0 0 8px rgba(255,229,102,0.2);
 }
 
 .card-back-pattern {

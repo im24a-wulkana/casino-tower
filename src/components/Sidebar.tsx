@@ -7,7 +7,7 @@ import { Collectible } from '../types';
 import { Leaderboard } from './Leaderboard';
 
 export function Sidebar() {
-  const { state, endDayManual, isDev, setFloor, claimDailyReward } = useGame();
+  const { state, endDayManual, isDev, setFloor } = useGame();
   const [sendTarget, setSendTarget] = useState('');
   const [sendAmount, setSendAmount] = useState('1000000');
   const [sendMsg, setSendMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -80,15 +80,6 @@ export function Sidebar() {
           <div className={`sidebar-timer ${timerUrgent ? 'timer-urgent' : ''}`}>
             {formatTime(state.timeLeft)}
           </div>
-        </div>
-      )}
-
-      {/* Daily Reward */}
-      {state.lastDailyRewardDay !== state.day && (
-        <div className="sidebar-section">
-          <button className="btn-daily-reward" onClick={claimDailyReward}>
-            🎁 CLAIM DAILY REWARD
-          </button>
         </div>
       )}
 

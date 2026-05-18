@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useGame } from '../store/gameStore';
 
 import { BettingPanel, GameHeader, ResultActions, useGameToast, GameToast } from '../components/BettingPanel';

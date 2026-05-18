@@ -181,18 +181,6 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
       };
     }
 
-    case 'CLAIM_DAILY_REWARD': {
-      // Only allow claiming once per day
-      if (state.lastDailyRewardDay === state.day) return state;
-      // Day 7 reward: 100T ticket for elite machine; all other days: 1T tickets (one for each machine)
-      const ticketsToAdd = state.day === 7 ? 100_000_000_000_000 : 3_000_000_000_000;
-      return {
-        ...state,
-        tickets: state.tickets + ticketsToAdd,
-        lastDailyRewardDay: state.day,
-      };
-    }
-
     case 'CURSE_USER': {
       // Dev only: curse a user (5x loss, reverse wins)
       // duration: 0 = permanent, else ms from now
@@ -232,7 +220,6 @@ interface GameContextValue {
   buyTicket: (cost: number, machineId: string) => void;
   rollCollectible: (c: import('../types').Collectible) => void;
   newRun: () => void;
-  claimDailyReward: () => void;
   curseUser: (username: string, duration?: number) => void;
   uncurseUser: (username: string) => void;
 }
@@ -307,7 +294,6 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     buyTicket: useCallback((cost, machineId) => dispatch({ type: 'BUY_TICKET', cost, machineId }), []),
     rollCollectible: useCallback((c) => dispatch({ type: 'ROLL_COLLECTIBLE', collectible: c }), []),
     newRun: useCallback(() => dispatch({ type: 'NEW_RUN' }), []),
-    claimDailyReward: useCallback(() => dispatch({ type: 'CLAIM_DAILY_REWARD' }), []),
     curseUser: useCallback((username, duration) => dispatch({ type: 'CURSE_USER', username, duration }), []),
     uncurseUser: useCallback((username) => dispatch({ type: 'UNCURSE_USER', username }), []),
   };
