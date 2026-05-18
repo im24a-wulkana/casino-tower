@@ -32,7 +32,6 @@ export function VictoryScreen() {
 
   const totalProfit = state.gameHistory.reduce((sum, h) => sum + h.profit, 0);
   const quotasHit = state.gameHistory.filter(h => h.quotaHit).length;
-  const nextMult = 1 + Math.log10((state.bank ?? 1) / 1_000_000) * 0.1;
 
   return (
     <div className={`overlay-screen victory-overlay ${visible ? 'overlay-visible' : ''}`}>
@@ -74,15 +73,9 @@ export function VictoryScreen() {
           </div>
         </div>
 
-        {/* New run bonus */}
-        <div className="victory-bonus-banner">
-          🔥 NEW RUN BONUS: <strong style={{ color: '#ffe066' }}>×{nextMult.toFixed(2)} income</strong>
-          &nbsp;forever
-        </div>
-
         <div className="victory-actions">
           <button className="btn-primary victory-btn-keep" onClick={newRun}>
-            🔄 NEW RUN ({nextMult.toFixed(2)}× income)
+            🔄 START NEW RUN
           </button>
           <button className="btn-secondary" onClick={resetGame}>
             FRESH START

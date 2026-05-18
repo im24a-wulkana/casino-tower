@@ -133,28 +133,10 @@ function gameReducer(state: GameState, action: GameAction & { isDev?: boolean })
       });
 
     case 'NEW_RUN': {
-      // After victory: bump win count, apply 1.2x multiplier stack
-      const newWinCount = (state.winCount ?? 0) + 1;
-      const newMult = Math.pow(1.2, newWinCount);
+      // Reset for next run, keep collectibles and tickets
       return createInitialState({
         collectibles: state.collectibles ?? [],
         tickets: state.tickets ?? 0,
-        winCount: newWinCount,
-        incomeMultiplier: newMult,
-      });
-    }
-
-    case 'ASCEND': {
-      // Day 15: scale multiplier based on bank amount (per 1B = +0.2%) and reset to day 1
-      // Formula: 1 + (bank / 5B), so 100B = 1.2x, 200B = 1.4x, etc.
-      const newWinCount = (state.winCount ?? 0) + 1;
-      const ascensionMult = 1 + state.bank / 5_000_000_000;
-      const newMult = Math.pow(ascensionMult, newWinCount);
-      return createInitialState({
-        collectibles: state.collectibles ?? [],
-        tickets: state.tickets ?? 0,
-        winCount: newWinCount,
-        incomeMultiplier: newMult,
       });
     }
 
@@ -242,7 +224,6 @@ interface GameContextValue {
   declareBankruptcy: () => void;
   endDayManual: () => void;
   startNextDay: () => void;
-  ascend: () => void;
   resetGame: () => void;
   setFloor: (floor: number) => void;
   loadExternalState: (s: GameState) => void;
@@ -310,7 +291,6 @@ export function GameProvider({ children, isDev, initialState, onStateChange, onD
     declareBankruptcy: useCallback(() => dispatch({ type: 'DECLARE_BANKRUPTCY' }), []),
     endDayManual: useCallback(() => dispatch({ type: 'END_DAY_MANUAL' }), []),
     startNextDay: useCallback(() => dispatch({ type: 'START_NEXT_DAY' }), []),
-    ascend: useCallback(() => dispatch({ type: 'ASCEND' }), []),
     resetGame: useCallback(() => dispatch({ type: 'RESET_GAME' }), []),
     setFloor: useCallback((floor) => dispatch({ type: 'SET_FLOOR', floor }), []),
     loadExternalState,

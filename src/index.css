@@ -3099,36 +3099,21 @@ input { font-family: var(--font-mono); }
   font-size: 32px;
 }
 
-.cb-reel {
+.cb-rolling {
   display: flex;
-  gap: 4px;
-  align-items: center;
-  will-change: transform;
-  transform: translateZ(0);
-}
-
-.cb-reel-item {
-  display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  min-width: 50px;
-  flex-shrink: 0;
-  padding: 4px;
-}
-
-.cb-reel-emoji {
+  gap: 8px;
   font-size: 24px;
 }
 
-@keyframes cb-reel-spin {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(calc(-1140px));
-  }
+.cb-rolling-emoji {
+  font-size: 32px;
+}
+
+.cb-rolling-dots {
+  font-size: 28px;
+  animation: pulse-red 0.8s infinite;
 }
 
 .cb-item-result {

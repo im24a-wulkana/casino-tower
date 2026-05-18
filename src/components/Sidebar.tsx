@@ -7,7 +7,7 @@ import { Collectible } from '../types';
 import { Leaderboard } from './Leaderboard';
 
 export function Sidebar() {
-  const { state, endDayManual, ascend, isDev, setFloor, claimDailyReward } = useGame();
+  const { state, endDayManual, isDev, setFloor, claimDailyReward } = useGame();
   const [sendTarget, setSendTarget] = useState('');
   const [sendAmount, setSendAmount] = useState('1000000');
   const [sendMsg, setSendMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -48,15 +48,12 @@ export function Sidebar() {
       <div className="sidebar-section">
         <div className="sidebar-label">BANK</div>
         <div className="sidebar-bank">{formatMoney(state.bank)}</div>
-        {state.incomeMultiplier && state.incomeMultiplier > 1 && (
-          <div className="sidebar-multiplier">+{((state.incomeMultiplier - 1) * 100).toFixed(0)}% income</div>
-        )}
       </div>
 
       {/* Quota / Last day */}
       <div className="sidebar-section">
         <div className="sidebar-label">
-          {isLastDay ? 'ASCENSION READY' : 'DAILY QUOTA'}
+          {isLastDay ? 'FINAL FLOOR' : 'DAILY QUOTA'}
         </div>
         {!isLastDay && (
           <>
@@ -72,7 +69,7 @@ export function Sidebar() {
           </>
         )}
         {isLastDay && (
-          <div className="last-day-badge">🏆 FINAL FLOOR — INFINITE TIME</div>
+          <div className="last-day-badge">🏆 INFINITE TIME</div>
         )}
       </div>
 
@@ -198,8 +195,8 @@ export function Sidebar() {
       )}
 
       {isLastDay && (
-        <button className="btn-end-day btn-ascend" onClick={ascend}>
-          🔥 ASCEND (×{(1 + Math.log10((state.bank ?? 1) / 1_000_000) * 0.1).toFixed(2)} income)
+        <button className="btn-end-day" onClick={endDayManual}>
+          🏆 SEE YOUR ENDING
         </button>
       )}
 
