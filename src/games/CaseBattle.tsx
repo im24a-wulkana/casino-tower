@@ -36,6 +36,25 @@ function PlayerCard({
   phase: BattleStatus;
 }) {
   const teamColor = TEAM_COLORS[player.teamIdx];
+  const reelRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const animRef = useRef<Record<number, number>>({});
+
+  // Animate reel when battle is running
+  useEffect(() => {
+    caseIds.forEach((cId, ci) => {
+      const caseDef = CASES.find(c => c.id === cId);
+      const item = player.items[ci];
+      if (phase === 'running' && !item && reelRefs.current[ci]) {
+        const el = reelRefs.current[ci];
+        if (el) {
+          el.style.animation = 'none';
+          el.offsetHeight; // Trigger reflow
+          el.style.animation = 'cb-reel-spin 4s cubic-bezier(0.12, 0.8, 0.2, 1) forwards';
+        }
+      }
+    });
+  }, [phase, caseIds, player.items]);
+
   return (
     <div className={`cb-arena-player ${isMe ? 'cb-arena-player-me' : ''}`}>
       <div className="cb-arena-player-name" style={{ color: isMe ? teamColor : undefined }}>
@@ -45,15 +64,30 @@ function PlayerCard({
         const caseDef = CASES.find(c => c.id === cId);
         if (!caseDef) return null;
         const item: CaseItem | undefined = player.items[ci];
+
+        // Generate 20 random items from the case for the reel
+        const reelItems = Array.from({ length: 20 }, () => {
+          const total = caseDef.items.reduce((s, i) => s + i.weight, 0);
+          let r = Math.random() * total;
+          for (const i of caseDef.items) {
+            r -= i.weight;
+            if (r <= 0) return i;
+          }
+          return caseDef.items[caseDef.items.length - 1];
+        });
+
         return (
           <div key={ci} className="cb-arena-case" style={{ borderTopColor: caseDef.color }}>
             {phase === 'waiting' && (
               <div className="cb-waiting"><span>{caseDef?.emoji}</span></div>
             )}
             {phase === 'running' && !item && (
-              <div className="cb-rolling">
-                <span className="cb-rolling-emoji">{caseDef?.emoji}</span>
-                <span className="cb-rolling-dots">…</span>
+              <div className="cb-reel" ref={el => reelRefs.current[ci] = el}>
+                {reelItems.map((it, ri) => (
+                  <div key={ri} className="cb-reel-item">
+                    <span className="cb-reel-emoji">{it.emoji}</span>
+                  </div>
+                ))}
               </div>
             )}
             {item && (

@@ -3068,7 +3068,60 @@ input { font-family: var(--font-mono); }
   align-items: center;
   justify-content: center;
   margin-bottom: 4px;
+  overflow: hidden;
 }
+
+.cb-waiting {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+}
+
+.cb-reel {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.cb-reel-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 50px;
+  flex-shrink: 0;
+  padding: 4px;
+}
+
+.cb-reel-emoji {
+  font-size: 24px;
+}
+
+@keyframes cb-reel-spin {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-1140px));
+  }
+}
+
+.cb-item-result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px;
+  animation: fade-in 0.4s ease;
+}
+
+.cb-item-emoji { font-size: 32px; }
+.cb-item-name  { font-size: 11px; color: var(--text-dim); text-align: center; }
+.cb-item-value { font-family: var(--font-mono); font-size: 14px; font-weight: 700; }
 
 /* ─── Tickets & Collectibles ─────────────────────────────────────────────── */
 
