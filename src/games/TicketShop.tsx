@@ -150,17 +150,6 @@ export function TicketShop() {
     <div className="game-view ts-wrap">
       <GameHeader title="TICKET SHOP" bank={gs.bank} onLeave={leave} />
 
-      {/* Daily Reward Button */}
-      <div className="ts-daily-reward-section">
-        <button
-          className="ts-daily-reward-btn"
-          disabled={gs.lastDailyRewardDay === gs.day}
-          onClick={claimDailyReward}
-        >
-          {gs.lastDailyRewardDay === gs.day ? '✓ CLAIMED TODAY' : `📅 CLAIM DAILY REWARD — DAY ${gs.day}`}
-        </button>
-      </div>
-
       {/* 3 Vending Machines */}
       <div className="ts-machines-container">
         {MACHINES.map(machine => {

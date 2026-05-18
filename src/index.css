@@ -3,24 +3,29 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #0a0a0a;
-  --surface:   #131313;
-  --card:      #1a1a1a;
-  --card2:     #222222;
-  --border:    #2a2a2a;
-  --gold:      #c9a84c;
-  --gold-dim:  #8a6f2e;
-  --red:       #e63946;
-  --green:     #2dc653;
-  --blue:      #4caaff;
-  --purple:    #b44cff;
-  --text:      #e8e8e8;
-  --text-dim:  #888;
+  --bg:        #050508;
+  --surface:   #0c0c12;
+  --card:      #111118;
+  --card2:     #181820;
+  --border:    #1e1e2e;
+  --gold:      #ffe566;
+  --gold-dim:  #8a7820;
+  --red:       #ff2244;
+  --green:     #00ff88;
+  --blue:      #00cfff;
+  --purple:    #bf00ff;
+  --text:      #e8e8f0;
+  --text-dim:  #666680;
   --font-display: 'Bebas Neue', sans-serif;
   --font-body:    system-ui, sans-serif;
   --font-mono:    'JetBrains Mono', monospace;
-  --radius:    8px;
-  --radius-lg: 14px;
+  --radius:    6px;
+  --radius-lg: 12px;
+  --neon-gold: 0 0 8px rgba(255,229,102,0.6), 0 0 20px rgba(255,229,102,0.2);
+  --neon-blue: 0 0 8px rgba(0,207,255,0.6), 0 0 20px rgba(0,207,255,0.2);
+  --neon-red:  0 0 8px rgba(255,34,68,0.6),  0 0 20px rgba(255,34,68,0.2);
+  --neon-green:0 0 8px rgba(0,255,136,0.6),  0 0 20px rgba(0,255,136,0.2);
+  --neon-purple:0 0 8px rgba(191,0,255,0.6), 0 0 20px rgba(191,0,255,0.2);
 }
 
 /* ─── Floor Themes ─────────────────────────────────────────────────────────── */

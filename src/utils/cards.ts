@@ -66,5 +66,6 @@ export function suitSymbol(suit: Suit): string {
 }
 
 export function suitColor(suit: Suit): string {
-  return suit === 'hearts' || suit === 'diamonds' ? '#e63946' : '#f0f0f0';
+  if (suit === 'hearts' || suit === 'diamonds') return '#cc2233'; // deep red
+  return '#111111'; // near-black for clubs/spades
 }
