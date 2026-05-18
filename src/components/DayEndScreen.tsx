@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useGame } from '../store/gameStore';
-import { formatMoney } from '../utils/gameLogic';
+import { formatMoney, quotaForDay } from '../utils/gameLogic';
 
 export function DayEndScreen() {
   const { state, startNextDay } = useGame();
@@ -46,6 +46,7 @@ export function DayEndScreen() {
         {!isLastDay && quotaHit && (
           <div className="day-end-next">
             <p className="day-end-hint">Day {day + 1} awaits...</p>
+            <p className="day-end-quota">Next quota: <strong>{formatMoney(quotaForDay(day + 1))}</strong></p>
             <button className="btn-primary btn-limo" onClick={startNextDay}>
               🚗 ENTER LIMO
             </button>

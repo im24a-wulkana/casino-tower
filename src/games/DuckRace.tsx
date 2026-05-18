@@ -60,6 +60,10 @@ export function DuckRace() {
     }, 80);
   };
 
+  useEffect(() => {
+    return () => { if (frameRef.current) clearInterval(frameRef.current); };
+  }, []);
+
   const reset = () => { setPhase('betting'); setResult(null); setPositions([0,0,0,0,0]); setWinner(null); setBet(v => Math.min(v, gs.bank)); };
   const leave = () => gs.bank <= 0 ? declareBankruptcy() : setActiveGame(null);
 

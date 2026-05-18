@@ -1,6 +1,14 @@
 import { GameState, GameHistoryEntry, GamePhase } from '../types';
 import { createRNG } from './rng';
 
+export const FLOOR_LABELS: Record<number, string> = {
+  1: 'LOBBY',
+  2: 'MEZZANINE',
+  3: 'HIGH STAKES',
+  4: 'PENTHOUSE',
+  5: 'LEGEND',
+};
+
 const FLOOR_GAMES: Record<number, string[]> = {
   1: ['blackjack', 'roulette', 'slots', 'street-craps', 'wheel-of-fortune', 'duck-race'],
   2: ['penguin-cross', 'keno', 'crash', 'hilo', 'plinko', 'money-wheel'],
@@ -40,10 +48,10 @@ export function getAvailableGames(floor: number, seed: number): string[] {
 }
 
 export function quotaForDay(day: number): number {
-  // Days 13-15: floor 5 — escalating quotas (achievable but difficult)
-  if (day === 13) return 5_000_000;        // $5M
-  if (day === 14) return 75_000_000;       // $75M
-  if (day === 15) return 1_000_000_000;    // $1B
+  // Days 13-15: floor 5 — escalating quotas (smoothed progression)
+  if (day === 13) return 1_000_000;         // $1M (was $5M — smoother from day 12)
+  if (day === 14) return 25_000_000;        // $25M (was $75M)
+  if (day === 15) return 500_000_000;       // $500M (was $1B)
   let q = 2000;
   for (let i = 1; i < day; i++) q = Math.round(q * 1.6);
   return q;
@@ -132,7 +140,7 @@ export function formatTime(seconds: number): string {
 export const GAME_META: Record<string, { name: string; floor: number; description: string }> = {
   blackjack: { name: 'Blackjack', floor: 1, description: 'Beat the dealer to 21. BJ pays 3:2.' },
   roulette: { name: 'Roulette', floor: 1, description: 'Bet on number, color, or dozen.' },
-  slots: { name: 'Slots', floor: 1, description: '3-reel. Hit 3-of-a-kind for 10x.' },
+  slots: { name: 'Slots', floor: 1, description: '3×7=10x, 3×other=5x, 2-match=1.2x.' },
   'street-craps': { name: 'Street Craps', floor: 1, description: '7/11 win. 2/3/12 lose. Roll the point.' },
   'wheel-of-fortune': { name: 'Wheel of Fortune', floor: 1, description: 'Spin for 2x–10x or LOSE.' },
   'duck-race': { name: 'Duck Race', floor: 1, description: '5 ducks race. Pick yours. YARL pays 8:1.' },

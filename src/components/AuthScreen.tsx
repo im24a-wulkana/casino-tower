@@ -26,7 +26,7 @@ export function AuthScreen() {
         <div className="auth-logo">
           <span className="auth-logo-icon">🎰</span>
           <div className="auth-logo-title">CASINO TOWER</div>
-          <div className="auth-logo-sub">FLOORS 1–4 · 15 GAMES · 12 DAYS</div>
+          <div className="auth-logo-sub">FLOORS 1–5 · 19 GAMES · 15 DAYS</div>
         </div>
 
         <div className="auth-tabs">

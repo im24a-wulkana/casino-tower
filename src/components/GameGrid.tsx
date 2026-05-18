@@ -7,9 +7,10 @@ const FLOOR_COLORS: Record<number, string> = {
   2: '#4caaff',
   3: '#b44cff',
   4: '#ff4c4c',
+  5: '#ffe066',
 };
 
-// All games are now implemented
+// All games are implemented — this list matches App.tsx GAME_COMPONENTS
 const IMPLEMENTED = new Set([
   'blackjack','roulette','slots','street-craps','wheel-of-fortune','duck-race',
   'penguin-cross','keno','crash','hilo','plinko','money-wheel',

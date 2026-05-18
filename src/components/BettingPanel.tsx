@@ -19,13 +19,22 @@ export function BettingPanel({
   disabled = false,
 }: BettingPanelProps) {
   const presets = [
-    { label: 'MIN', v: 10 },
+    { label: 'MIN', v: 1 },
     { label: '$100', v: 100 },
     { label: '$500', v: 500 },
     { label: '$1K', v: 1000 },
     { label: 'ALL IN', v: bank },
   ];
   const clamp = (v: number) => Math.max(1, Math.min(v, bank));
+
+  // Dynamic step size based on bank
+  const getStep = () => {
+    if (bank > 1_000_000) return 10_000;
+    if (bank > 100_000) return 1_000;
+    if (bank > 10_000) return 100;
+    return 100;
+  };
+  const step = getStep();
 
   return (
     <div className="betting-panel">
@@ -43,7 +52,7 @@ export function BettingPanel({
         ))}
       </div>
       <div className="betting-input-row">
-        <button className="btn-adj" onClick={() => onChange(clamp(value - 100))} disabled={disabled}>
+        <button className="btn-adj" onClick={() => onChange(clamp(value - step))} disabled={disabled}>
           −
         </button>
         <input
@@ -52,10 +61,10 @@ export function BettingPanel({
           min={1}
           max={bank}
           value={value}
-          onChange={(e) => onChange(clamp(parseInt(e.target.value) || 1))}
+          onChange={(e) => onChange(clamp(parseInt(e.target.value, 10) || 1))}
           disabled={disabled}
         />
-        <button className="btn-adj" onClick={() => onChange(clamp(value + 100))} disabled={disabled}>
+        <button className="btn-adj" onClick={() => onChange(clamp(value + step))} disabled={disabled}>
           +
         </button>
       </div>

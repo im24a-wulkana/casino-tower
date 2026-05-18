@@ -1,24 +1,20 @@
 import React, { useState } from 'react';
 import { useGame } from '../store/gameStore';
-import { formatMoney, formatTime } from '../utils/gameLogic';
+import { formatMoney, formatTime, FLOOR_LABELS } from '../utils/gameLogic';
 import { supabase } from '../lib/supabase';
 import { rarityColor, RARITY_ORDER } from '../games/collectibles';
 import { Collectible } from '../types';
 import { Leaderboard } from './Leaderboard';
 
-const FLOOR_LABELS: Record<number, string> = {
-  1: 'LOBBY', 2: 'MEZZ', 3: 'HIGH', 4: 'PENT', 5: 'LEGEND',
-};
-
 export function Sidebar() {
-  const { state, endDayManual, ascend, isDev, setFloor } = useGame();
+  const { state, endDayManual, ascend, isDev, setFloor, claimDailyReward } = useGame();
   const [sendTarget, setSendTarget] = useState('');
   const [sendAmount, setSendAmount] = useState('1000000');
   const [sendMsg, setSendMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showCollectionModal, setShowCollectionModal] = useState(false);
 
-  const progress = Math.min(1, state.bank / state.quota);
+  const progress = state.quota > 0 ? Math.min(1, state.bank / state.quota) : 1;
   const timerUrgent = state.timeLeft <= 60;
   const quotaHit = state.bank >= state.quota;
   const isLastDay = state.day >= 15;
@@ -87,6 +83,15 @@ export function Sidebar() {
           <div className={`sidebar-timer ${timerUrgent ? 'timer-urgent' : ''}`}>
             {formatTime(state.timeLeft)}
           </div>
+        </div>
+      )}
+
+      {/* Daily Reward */}
+      {state.lastDailyRewardDay !== state.day && (
+        <div className="sidebar-section">
+          <button className="btn-daily-reward" onClick={claimDailyReward}>
+            🎁 CLAIM DAILY REWARD
+          </button>
         </div>
       )}
 

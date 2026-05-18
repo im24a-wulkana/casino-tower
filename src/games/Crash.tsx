@@ -22,6 +22,7 @@ export function Crash() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const multRef = useRef(1.0);
   const crashRef = useRef(1.0);
+  const activeBetRef = useRef(0);
   const { toast, show } = useGameToast();
 
   const clearTimer = () => {
@@ -32,6 +33,7 @@ export function Crash() {
     const cp = generateCrashPoint();
     updateBank(-bet);
     setActiveBet(bet);
+    activeBetRef.current = bet;
     setCrashPoint(cp);
     crashRef.current = cp;
     multRef.current = 1.0;
@@ -44,7 +46,7 @@ export function Crash() {
       setMult(multRef.current);
       if (multRef.current >= crashRef.current) {
         clearTimer();
-        show(false, `CRASHED @ ${crashRef.current.toFixed(2)}× — YOU LOSE`, -activeBet);
+        show(false, `CRASHED @ ${crashRef.current.toFixed(2)}× — YOU LOSE`, -activeBetRef.current);
         setPhase('crashed');
       }
     }, 60);

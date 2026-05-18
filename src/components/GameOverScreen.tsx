@@ -10,7 +10,7 @@ export function GameOverScreen() {
     return () => clearTimeout(t);
   }, []);
 
-  const daysPlayed = state.gameHistory.length;
+  const daysPlayed = Math.max(1, state.gameHistory.length);
 
   return (
     <div className={`overlay-screen overlay-dark ${visible ? 'overlay-visible' : ''}`}>

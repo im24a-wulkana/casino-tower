@@ -30,9 +30,9 @@ export function VictoryScreen() {
     return () => clearTimeout(t);
   }, []);
 
-  const totalProfit = state.bank - 1000;
+  const totalProfit = state.gameHistory.reduce((sum, h) => sum + h.profit, 0);
   const quotasHit = state.gameHistory.filter(h => h.quotaHit).length;
-  const nextMult = Math.pow(1.2, (state.winCount ?? 0) + 1);
+  const nextMult = 1 + Math.log10((state.bank ?? 1) / 1_000_000) * 0.1;
 
   return (
     <div className={`overlay-screen victory-overlay ${visible ? 'overlay-visible' : ''}`}>

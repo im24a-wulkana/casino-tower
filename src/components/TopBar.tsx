@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useGame } from '../store/gameStore';
+import { FLOOR_LABELS } from '../utils/gameLogic';
 
 interface TopBarProps {
   onLogout: () => void;
@@ -13,7 +14,7 @@ export function TopBar({ onLogout, username, isDev, onPause }: TopBarProps) {
   const [curseInput, setCurseInput] = useState('');
   const [curseDuration, setCurseDuration] = useState('5'); // minutes, "0" for permanent
   const [showCursePanel, setShowCursePanel] = useState(false);
-  const floorLabel = ['', 'LOBBY', 'MEZZANINE', 'HIGH STAKES', 'PENTHOUSE', 'LEGEND'][state.floor];
+  const floorLabel = FLOOR_LABELS[state.floor] ?? '';
 
   const handleCurseUser = () => {
     if (curseInput.trim()) {
