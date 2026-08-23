@@ -39,6 +39,16 @@ function setCachedGameState(username: string, state: GameState) {
   } catch {}
 }
 
+// Supabase reports an unreachable backend as a fetch failure with no Postgres
+// error code. Surface that distinctly — a dead/paused project otherwise looks
+// identical to a wrong password.
+function describeDBError(error: { code?: string; message?: string }, action: string): string {
+  const isNetwork = !error.code || error.code === '' || /fetch|network|failed to fetch/i.test(error.message ?? '');
+  if (isNetwork) return "Can't reach the server. Check your connection and try again.";
+  console.error(`${action} DB error:`, error.code, error.message);
+  return `${action} failed (${error.code}). Try again.`;
+}
+
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -110,7 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('password_hash', simpleHash(pass))
       .maybeSingle();
 
-    if (error) return 'Login failed. Try again.';
+    if (error) return describeDBError(error, 'Login');
     if (!data) return 'Invalid username or password.';
 
     const gs: GameState | null = data.game_state ?? null;
@@ -136,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (error) {
       if (error.code === '23505') return 'Username already taken.';
-      return 'Registration failed. Try again.';
+      return describeDBError(error, 'Registration');
     }
 
     localStorage.setItem(SESSION_KEY, JSON.stringify({ username: key }));
@@ -214,7 +224,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         supabase.from('users')
           .update({ game_state: pendingStateRef.current })
           .eq('username', username)
-          .catch(err => console.warn('Unmount save error:', err));
+          .then(({ error }) => {
+            if (error) console.warn('Unmount save error:', error.message);
+          });
       }
     };
   }, [username]);
